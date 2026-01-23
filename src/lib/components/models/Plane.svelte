@@ -8,7 +8,6 @@ Command: npx @threlte/gltf@2.0.1 /Users/varundudeja/Documents/desi-world/static/
 	import { T } from '@threlte/core';
 	import { useDraco, useGltf } from '@threlte/extras';
 	import { AutoColliders } from '@threlte/rapier';
-	import { onMount } from 'svelte';
 	import { isPlane } from '$lib/stores/commonStores';
 
 	export const ref = new Group();
@@ -16,9 +15,9 @@ Command: npx @threlte/gltf@2.0.1 /Users/varundudeja/Documents/desi-world/static/
 	const dracoLoader = useDraco();
 
 	const gltf = useGltf('/models/desi-world/Plane-transformed.glb', { dracoLoader });
-	const gltf2 = useGltf('/models/desi-world/Plane-transformed.glb', { dracoLoader }).then((res) => {
+	if (gltf) {
 		$isPlane = true;
-	});
+	}
 
 	let { ...rest } = $props();
 </script>
