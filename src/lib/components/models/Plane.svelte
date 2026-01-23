@@ -9,15 +9,29 @@ Command: npx @threlte/gltf@2.0.1 /Users/varundudeja/Documents/desi-world/static/
 	import { useDraco, useGltf } from '@threlte/extras';
 	import { AutoColliders } from '@threlte/rapier';
 	import { isPlane } from '$lib/stores/commonStores';
+	import { onMount } from 'svelte';
 
 	export const ref = new Group();
 
 	const dracoLoader = useDraco();
 
 	const gltf = useGltf('/models/desi-world/Plane-transformed.glb', { dracoLoader });
-	if (gltf) {
-		$isPlane = true;
-	}
+	gltf.then(() => ($isPlane = true));
+
+	// $effect(() => {
+	// 	const value = gltf.value; // or $gltf if auto-subscription is enabled
+	// 	console.log('value', gltf.subscribe);
+
+	// 	if (value) {
+	// 		isPlane.set(true);
+	// 	}
+	// });
+
+	// onMount(() => {
+	// 	// if (gltf) {
+	// 	$isPlane = true;
+	// 	// }
+	// });
 
 	let { ...rest } = $props();
 </script>
