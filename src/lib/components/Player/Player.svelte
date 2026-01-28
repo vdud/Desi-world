@@ -129,7 +129,7 @@
 		</CollisionGroups>
 	</RigidBody>
 	<!-- <Character {movement} /> -->
-	<Character {movement} character="male" />
+	<Character {movement} character="female" />
 	<!-- <Character
 		characterUrl="/models/male.glb"
 		{movement}
