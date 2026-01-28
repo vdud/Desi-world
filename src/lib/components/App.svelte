@@ -4,6 +4,7 @@
 	import Scene from './Scene.svelte';
 	import InterfaceUi from './Player/Player Controller/Interface/InterfaceUI.svelte';
 	import { Camera, Vector2, Vector3, Quaternion } from 'three';
+	import PlaneAnother from './models/Ground.svelte';
 
 	const movement = $state({
 		forward: 0,

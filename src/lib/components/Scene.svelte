@@ -6,8 +6,8 @@
 	import { Sky } from '@threlte/extras';
 
 	import MainGate from './models/MainGate.svelte';
-	import Plane from './models/Plane.svelte';
 	import { isPlane } from '$lib/stores/commonStores';
+	import Ground from './models/Ground.svelte';
 
 	const { movement } = $props();
 </script>
@@ -16,7 +16,7 @@
 
 <CollisionGroups groups={[0, 15]}>
 	<RigidBody type={'fixed'}>
-		<Plane />
+		<Ground />
 		<MainGate />
 	</RigidBody>
 </CollisionGroups>

@@ -1,71 +1,129 @@
-<!-- src/lib/components/Player/Character.svelte -->
-
 <script lang="ts">
-	import { GLTF, useGltfAnimations } from '@threlte/extras';
-	import { T } from '@threlte/core';
+	import { T, useTask } from '@threlte/core';
+	import { useDraco, useGltf } from '@threlte/extras';
 	import { DEG2RAD } from 'three/src/math/MathUtils.js';
+	import { AnimationMixer, LoopRepeat } from 'three';
 
-	let currentActionKey = 'idle';
-
-	const { gltf, actions } = useGltfAnimations();
-
-	const { movement } = $props();
-
-	$effect(() => {
-		$actions[currentActionKey]?.play();
-	});
-
-	let rotate = $state(DEG2RAD);
-
-	function transitionTo(nextActionKey: string, duration = 1) {
-		const currentAction = $actions[currentActionKey];
-		const nextAction = $actions[nextActionKey];
-		if (!nextAction || currentAction === nextAction) return;
-		// Function inspired by: https://github.com/mrdoob/three.js/blob/master/examples/webgl_animation_skinning_blending.html
-		nextAction.enabled = true;
-		if (currentAction) {
-			currentAction.crossFadeTo(nextAction, duration, true);
-		}
-		// Not sure why I need this but the source code does not
-		nextAction.play();
-		currentActionKey = nextActionKey;
+	interface Props {
+		movement: {
+			forward: number;
+			backward: number;
+		};
+		character?: 'female' | 'male';
 	}
 
-	function backwardTransitionIn() {
-		rotate = 180 * DEG2RAD;
-		transitionTo('walk', 0.3);
-	}
-	function backwardTransitionOut() {
-		rotate = 0 * DEG2RAD;
-		transitionTo('idle', 0.3);
-	}
+	let { movement, character = 'female' }: Props = $props();
 
-	let prevForward: any, prevBackward: any;
+	let mixer = $state<AnimationMixer>();
+	let currentActionKey = $state<'idle' | 'run'>('idle');
+	let targetRotation = $state(0);
+	let actions = $state<{ idle?: any; run?: any }>({});
 
-	$effect(() => {
-		if (prevForward !== movement.forward) {
-			movement.forward === 0 ? transitionTo('idle', 0.3) : transitionTo('run', 0.3);
-			prevForward = movement.forward;
+	const dracoLoader = useDraco();
+
+	// Load character model
+	const charPath =
+		character === 'female' ? '/models/female-transformed.glb' : '/models/male-transformed.glb';
+	const charGltf = useGltf(charPath, { dracoLoader });
+
+	// Load animation files
+	const idleGltf = useGltf('/models/Animations/idle-transformed.glb', { dracoLoader });
+	const runGltf = useGltf('/models/Animations/run-transformed.glb', { dracoLoader });
+	// Initialize once when all loaded - use untrack to prevent loops
+
+	function initMixer(scene: any) {
+		if (mixer) {
+			mixer.stopAllAction();
 		}
+
+		const newMixer = new AnimationMixer(scene);
+
+		// Wait for animations to load
+		Promise.all([$idleGltf, $runGltf]).then(([idle, run]) => {
+			if (!idle?.animations?.[0] || !run?.animations?.[0]) {
+				console.error('Missing animations:', { idle, run });
+				return;
+			}
+
+			// Create actions properly
+			const idleAction = newMixer.clipAction(idle.animations[0]);
+			idleAction.setLoop(LoopRepeat, Infinity);
+			idleAction.clampWhenFinished = false;
+
+			const runAction = newMixer.clipAction(run.animations[0]);
+			runAction.setLoop(LoopRepeat, Infinity);
+			runAction.clampWhenFinished = false;
+
+			actions = {
+				idle: idleAction,
+				run: runAction
+			};
+
+			// Start idle immediately
+			idleAction.play();
+			currentActionKey = 'idle';
+			mixer = newMixer;
+		});
+	}
+
+	function switchTo(nextKey: 'idle' | 'run') {
+		if (!mixer || !actions.idle || !actions.run) return;
+		if (currentActionKey === nextKey) return;
+
+		const current = actions[currentActionKey];
+		const next = actions[nextKey];
+
+		// Reset next action to start from beginning
+		next.reset();
+		next.setEffectiveWeight(1);
+		next.setEffectiveTimeScale(1);
+		next.enabled = true;
+
+		if (current) {
+			// Smooth crossfade
+			current.crossFadeTo(next, 0.3, true);
+		}
+
+		next.play();
+		currentActionKey = nextKey;
+	}
+
+	// Update loop
+	useTask((delta) => {
+		mixer?.update(delta);
 	});
 
+	// Movement logic
+	let wasMoving = $state(false);
+
 	$effect(() => {
-		if (prevBackward !== movement.backward) {
-			movement.backward === 1 ? backwardTransitionIn() : backwardTransitionOut();
-			prevBackward = movement.backward;
+		if (!mixer) return;
+
+		const isMoving = movement.forward > 0 || movement.backward === 1;
+
+		// Rotation
+		targetRotation = movement.backward === 1 ? 180 * DEG2RAD : 0;
+
+		// Only switch on state change
+		if (isMoving !== wasMoving) {
+			wasMoving = isMoving;
+			switchTo(isMoving ? 'run' : 'idle');
 		}
 	});
-
-	const modal = 'https://threejs.org/examples/models/gltf/Xbot.glb';
 </script>
 
-<T.Mesh receiveShadow castShadow>
-	<GLTF
+{#if $charGltf}
+	<T
+		is={$charGltf.scene}
+		position={[0, -0.86, 0]}
+		rotation.y={targetRotation}
 		castShadow
 		receiveShadow
-		url={modal}
-		position={[0, -0.86, 0]}
-		rotation.y={rotate}
-		bind:gltf={$gltf}
+		oncreate={(ref) => {
+			initMixer(ref);
+			return () => {
+				mixer?.stopAllAction();
+			};
+		}}
 	/>
-</T.Mesh>
+{/if}

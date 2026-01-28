@@ -128,5 +128,15 @@
 			<Collider shape={'capsule'} args={[height / 2 - radius, radius]} />
 		</CollisionGroups>
 	</RigidBody>
-	<Character {movement} />
+	<!-- <Character {movement} /> -->
+	<Character {movement} character="male" />
+	<!-- <Character
+		characterUrl="/models/male.glb"
+		{movement}
+		animationUrls={{
+			idle: '/anims/idle.glb',
+			run: '/anims/run.glb',
+			walk: '/anims/walk.glb'
+		}}
+	/> -->
 </T.Group>
