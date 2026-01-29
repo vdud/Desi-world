@@ -8,6 +8,7 @@ Command: npx @threlte/gltf@2.0.1 /Users/varundudeja/Documents/desi-world/static/
 	import { useDraco, useGltf } from '@threlte/extras';
 	import { AutoColliders } from '@threlte/rapier';
 	import type { RenderProps } from './render-props';
+	import { MeshStandardMaterial } from 'three';
 
 	let { fallback, error, children, ref = $bindable(), ...props } = $props<RenderProps>();
 
@@ -22,10 +23,15 @@ Command: npx @threlte/gltf@2.0.1 /Users/varundudeja/Documents/desi-world/static/
 	{:then gltf}
 		<AutoColliders shape={'trimesh'}>
 			<T.Mesh
-				position={[0, 0.09, -5]}
+				position={[0, 0, -6]}
 				geometry={gltf.nodes.Cube014__0.geometry}
-				material={gltf.materials['Scene_-_Root']}
+				material={new MeshStandardMaterial({
+					map: gltf.materials['Scene_-_Root'].map,
+					color: 0xffffff
+				})}
 				scale={1.4}
+				castShadow
+				receiveShadow
 			/>
 		</AutoColliders>
 	{:catch err}

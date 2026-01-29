@@ -9,6 +9,7 @@ Command: npx @threlte/gltf@3.0.1 /Users/varundudeja/Documents/My Codes/Antigravi
 	import { AutoColliders } from '@threlte/rapier';
 	import { isPlane } from '$lib/stores/commonStores';
 	import type { RenderProps } from './render-props';
+	import { MeshStandardMaterial } from 'three';
 
 	// let props: RenderProps = $props();
 
@@ -25,7 +26,16 @@ Command: npx @threlte/gltf@3.0.1 /Users/varundudeja/Documents/My Codes/Antigravi
 		{@render fallback?.()}
 	{:then gltf}
 		<AutoColliders shape={'trimesh'}>
-			<T.Mesh geometry={gltf.nodes.Plane.geometry} material={gltf.nodes.Plane.material} />
+			<T.Mesh
+				geometry={gltf.nodes.Plane.geometry}
+				material={new MeshStandardMaterial({
+					map: gltf.nodes.Plane.material.map,
+					color: 'yellow',
+					roughness: 0.8
+				})}
+				receiveShadow={true}
+				castShadow={false}
+			/>
 		</AutoColliders>
 	{:catch err}
 		{@render error?.({ error: err })}

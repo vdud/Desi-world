@@ -7,6 +7,7 @@
 	import Character from './Character.svelte';
 	import { useRapier } from '@threlte/rapier';
 	import { Ray } from '@dimforge/rapier3d-compat';
+	import { xor } from 'three/tsl';
 
 	const { movement } = $props();
 
@@ -122,21 +123,11 @@
 	<Controller object={capRef} {movement} />
 </T.PerspectiveCamera>
 
-<T.Group bind:ref={capsule} {position} rotation.y={Math.PI}>
+<T.Group bind:ref={capsule} position={[position[0], position[1], position[2]]} rotation.y={Math.PI}>
 	<RigidBody bind:rigidBody enabledRotations={[false, false, false]}>
 		<CollisionGroups groups={[0]}>
 			<Collider shape={'capsule'} args={[height / 2 - radius, radius]} />
 		</CollisionGroups>
 	</RigidBody>
-	<!-- <Character {movement} /> -->
-	<Character {movement} character="female" />
-	<!-- <Character
-		characterUrl="/models/male.glb"
-		{movement}
-		animationUrls={{
-			idle: '/anims/idle.glb',
-			run: '/anims/run.glb',
-			walk: '/anims/walk.glb'
-		}}
-	/> -->
+	<Character {movement} character="male" />
 </T.Group>

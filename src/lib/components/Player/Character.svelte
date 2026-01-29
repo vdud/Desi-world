@@ -115,11 +115,17 @@
 {#if $charGltf}
 	<T
 		is={$charGltf.scene}
-		position={[0, -0.86, 0]}
+		position={[0, -0.945, 0]}
 		rotation.y={targetRotation}
-		castShadow
-		receiveShadow
 		oncreate={(ref) => {
+			// Traverse and enable shadows on all meshes
+			ref.traverse((child) => {
+				if (child.isMesh) {
+					child.castShadow = true;
+					child.receiveShadow = true;
+				}
+			});
+
 			initMixer(ref);
 			return () => {
 				mixer?.stopAllAction();

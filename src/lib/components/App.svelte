@@ -3,8 +3,16 @@
 	import { World } from '@threlte/rapier';
 	import Scene from './Scene.svelte';
 	import InterfaceUi from './Player/Player Controller/Interface/InterfaceUI.svelte';
-	import { Camera, Vector2, Vector3, Quaternion } from 'three';
+	import {
+		Camera,
+		Vector2,
+		Vector3,
+		Quaternion,
+		PCFSoftShadowMap,
+		ACESFilmicToneMapping
+	} from 'three';
 	import PlaneAnother from './models/Ground.svelte';
+	import { ContactShadows, SoftShadows } from '@threlte/extras';
 
 	const movement = $state({
 		forward: 0,
@@ -85,7 +93,8 @@
 <svelte:window on:keydown|preventDefault={onKeyDown} on:keyup={onKeyUp} />
 
 <InterfaceUi {movement} {isInteracting} onMovementChange={handleMovementChange} />
-<Canvas>
+
+<Canvas shadows={PCFSoftShadowMap}>
 	<World>
 		<Scene {movement} />
 	</World>
