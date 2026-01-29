@@ -1,3 +1,4 @@
+<!-- src/lib/components/Player/Player Controller/InterfaceUI.svelte -->
 <script lang="ts">
 	import { type Vector2 } from 'three';
 	import { onMount } from 'svelte';

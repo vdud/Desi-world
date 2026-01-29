@@ -7,7 +7,6 @@
 	import Character from './Character.svelte';
 	import { useRapier } from '@threlte/rapier';
 	import { Ray } from '@dimforge/rapier3d-compat';
-	import { xor } from 'three/tsl';
 
 	const { movement } = $props();
 

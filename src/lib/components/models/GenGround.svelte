@@ -55,4 +55,4 @@
   Wireframe replacement: GridHelper is infinitely cheaper than 100 Wireframe components.
   Positioned slightly above tiles to prevent z-fighting.
 -->
-<!-- <T.GridHelper args={[totalWidth, size, 'black', 'black']} position={[0, y + 0.06, 0]} /> -->
+<T.GridHelper args={[totalWidth, size, 'black', 'black']} position={[0, y + 0.06, 0]} />

@@ -1,3 +1,4 @@
+<!-- src/lib/components/Player/Player Controller/ThirdPersonControls.svelte -->
 <script lang="ts">
 	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
 	import { Camera, Vector2, Vector3, Quaternion } from 'three';

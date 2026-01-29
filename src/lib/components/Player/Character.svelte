@@ -1,3 +1,4 @@
+<!-- src/lib/components/Player/Character.svelte -->
 <script lang="ts">
 	import { T, useTask } from '@threlte/core';
 	import { useDraco, useGltf } from '@threlte/extras';
@@ -115,7 +116,7 @@
 {#if $charGltf}
 	<T
 		is={$charGltf.scene}
-		position={[0, -0.945, 0]}
+		position={[0, -0.86, 0]}
 		rotation.y={targetRotation}
 		oncreate={(ref) => {
 			// Traverse and enable shadows on all meshes

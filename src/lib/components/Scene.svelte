@@ -1,22 +1,21 @@
 <script lang="ts">
-	import { AutoColliders, CollisionGroups, RigidBody } from '@threlte/rapier';
+	import { CollisionGroups, RigidBody } from '@threlte/rapier';
 
 	import Player from './Player/Player.svelte';
 
-	import { ContactShadows, Environment, Sky, SoftShadows, Stars } from '@threlte/extras';
+	import { Sky } from '@threlte/extras';
 
 	import MainGate from './models/MainGate.svelte';
 	import { isPlane } from '$lib/stores/commonStores';
-	import Ground from './models/Ground.svelte';
+	// import Ground from './models/Ground.svelte';
 	import { T } from '@threlte/core';
-	import { BoxGeometry } from 'three';
 	import GenGround from './models/GenGround.svelte';
 
 	const { movement } = $props();
 </script>
 
-<Sky elevation={1} castShadow turbidity={10} rayleigh={4} scale={100000} mieCoefficient={0.005} />
-<Stars count={500} radius={80} depth={150} speed={1} />
+<Sky elevation={1} castShadow turbidity={10} rayleigh={4} mieCoefficient={0.005} />
+<!-- <Stars count={500} radius={80} depth={150} speed={1} /> -->
 
 <T.DirectionalLight
 	position={[1, 10, -10]}

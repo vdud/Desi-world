@@ -2,17 +2,8 @@
 	import { Canvas } from '@threlte/core';
 	import { World } from '@threlte/rapier';
 	import Scene from './Scene.svelte';
-	import InterfaceUi from './Player/Player Controller/Interface/InterfaceUI.svelte';
-	import {
-		Camera,
-		Vector2,
-		Vector3,
-		Quaternion,
-		PCFSoftShadowMap,
-		ACESFilmicToneMapping
-	} from 'three';
-	import PlaneAnother from './models/Ground.svelte';
-	import { ContactShadows, SoftShadows } from '@threlte/extras';
+	import InterfaceUi from './Player/Player Controller/InterfaceUI.svelte';
+	import { Vector2 } from 'three';
 
 	const movement = $state({
 		forward: 0,
