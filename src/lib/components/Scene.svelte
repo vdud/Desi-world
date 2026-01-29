@@ -3,7 +3,7 @@
 
 	import Player from './Player/Player.svelte';
 
-	import { ContactShadows, Environment, Sky } from '@threlte/extras';
+	import { ContactShadows, Environment, Sky, SoftShadows, Stars } from '@threlte/extras';
 
 	import MainGate from './models/MainGate.svelte';
 	import { isPlane } from '$lib/stores/commonStores';
@@ -15,10 +15,11 @@
 	const { movement } = $props();
 </script>
 
-<Sky setEnvironment={true} elevation={1} castShadow />
+<Sky elevation={1} castShadow turbidity={10} rayleigh={4} scale={100000} mieCoefficient={0.005} />
+<Stars count={500} radius={80} depth={150} speed={1} />
 
 <T.DirectionalLight
-	position={[1, 20, -10]}
+	position={[1, 10, -10]}
 	intensity={1.5}
 	castShadow
 	shadow.mapSize={[4096, 4096]}

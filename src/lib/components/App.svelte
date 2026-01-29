@@ -94,7 +94,7 @@
 
 <InterfaceUi {movement} {isInteracting} onMovementChange={handleMovementChange} />
 
-<Canvas shadows={PCFSoftShadowMap}>
+<Canvas>
 	<World>
 		<Scene {movement} />
 	</World>
