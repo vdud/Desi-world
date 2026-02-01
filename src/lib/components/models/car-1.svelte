@@ -29,17 +29,23 @@ Title: Cartoon Car
 				<T.Group rotation={[-Math.PI / 2, 0, 0]} scale={100}>
 					<T.Mesh
 						castShadow
+						receiveShadow={false}
+						frustumCulled={true}
 						geometry={gltf.nodes.black_floats_Pure_black_0.geometry}
 						material={gltf.materials.Pure_black}
 					/>
 					<T.Mesh
 						castShadow
+						receiveShadow={false}
+						frustumCulled={true}
 						geometry={gltf.nodes.black_floats_chrome_0.geometry}
 						material={gltf.materials.chrome}
 					/>
 				</T.Group>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.body_car_body_0.geometry}
 					material={gltf.materials.car_body}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -47,6 +53,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.hood_car_body_0.geometry}
 					material={gltf.materials.car_body}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -54,6 +62,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.front_bumper_carbon_fiber_0.geometry}
 					material={gltf.materials.carbon_fiber}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -61,6 +71,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.front_fenders_carbon_fiber_0.geometry}
 					material={gltf.materials.carbon_fiber}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -68,6 +80,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane006_car_body_0.geometry}
 					material={gltf.materials.car_body}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -75,6 +89,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane008_window_0.geometry}
 					material={gltf.materials.window}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -82,6 +98,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane009_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -89,6 +107,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane007_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -96,6 +116,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.trunk_car_body_0.geometry}
 					material={gltf.materials.car_body}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -103,6 +125,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.black_parts_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -110,6 +134,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.rear_fenders_carbon_fiber_0.geometry}
 					material={gltf.materials.carbon_fiber}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -117,6 +143,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.headlight_glass_headlight_glass_0.geometry}
 					material={gltf.materials.headlight_glass}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -124,6 +152,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane026_chrome_0.geometry}
 					material={gltf.materials.chrome}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -131,6 +161,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.rear_bumper_carbon_fiber_0.geometry}
 					material={gltf.materials.carbon_fiber}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -138,6 +170,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.exhaust_chrome_0.geometry}
 					material={gltf.materials.chrome}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -145,6 +179,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane005_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -152,6 +188,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.side_skirts_carbon_fiber_0.geometry}
 					material={gltf.materials.carbon_fiber}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -159,6 +197,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane011_window_0.geometry}
 					material={gltf.materials.window}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -166,6 +206,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane014_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -173,6 +215,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane017_window_0.geometry}
 					material={gltf.materials.window}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -180,6 +224,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane033_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -187,6 +233,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane034_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -194,6 +242,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane035_window_0.geometry}
 					material={gltf.materials.window}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -201,6 +251,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane036_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -208,6 +260,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.mirrors_chrome_0.geometry}
 					material={gltf.materials.chrome}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -215,6 +269,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.front_right_wheel_wheel_0.geometry}
 					material={gltf.materials.wheel}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -222,6 +278,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.Plane038_black_parts_0.geometry}
 					material={gltf.materials.black_parts}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -229,6 +287,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.intercooler_intercooler_0.geometry}
 					material={gltf.materials.intercooler}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -236,6 +296,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.rear_wheels_wheel_0.geometry}
 					material={gltf.materials.wheel}
 					rotation={[-Math.PI / 2, 0, 0]}
@@ -243,6 +305,8 @@ Title: Cartoon Car
 				/>
 				<T.Mesh
 					castShadow
+					receiveShadow={false}
+					frustumCulled={true}
 					geometry={gltf.nodes.front_left_wheel_wheel_0.geometry}
 					material={gltf.materials.wheel}
 					rotation={[-Math.PI / 2, 0, 0]}

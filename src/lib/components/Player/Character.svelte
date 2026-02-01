@@ -32,6 +32,11 @@
 
 	const dracoLoader = useDraco();
 
+	// Dynamic position based on character model
+	const characterPosition = $derived(
+		character === 'female' ? ([0, -0.86, 0] as const) : ([0, -0.91, 0] as const)
+	);
+
 	// Fix: Make charGltf derived so it updates when character changes
 	const charGltf = $derived(
 		useGltf(
@@ -212,7 +217,7 @@
 {#if $charGltf}
 	<T
 		is={$charGltf.scene}
-		position={[0, -0.86, 0]}
+		position={characterPosition}
 		rotation.y={currentRotation}
 		oncreate={(ref) => {
 			ref.traverse((child) => {

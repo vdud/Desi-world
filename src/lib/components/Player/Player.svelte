@@ -7,78 +7,76 @@
 	import Character from './Character.svelte';
 	import { useRapier } from '@threlte/rapier';
 	import { Ray } from '@dimforge/rapier3d-compat';
+	import { playerPosition } from '$lib/stores/commonStores';
 
 	const { movement } = $props();
 
 	const { world } = useRapier();
+	const { renderer } = useThrelte();
+	if (!renderer) throw new Error();
 
-	// Ground check configuration
+	// Spawn & Respawn configuration
+	const SPAWN_POS = { x: 0, y: 2, z: 0 };
+	const FALL_THRESHOLD = -15;
 	const GROUND_CHECK_DISTANCE = 0.15;
-	const RAY_ORIGIN_OFFSET = 0.05;
 
-	let position = $state([0, 1, 0]);
+	let position = $state([0, 2, 0]);
 	let radius = 0.3;
 	let height = 1.7;
 	let speed = 6;
 
 	let capsule: any = $state();
 	let capRef: any = $state();
-
-	$effect(() => {
-		if (capsule) {
-			capRef = capsule;
-		}
-	});
-
 	let rigidBody: any = $state();
-
-	const { renderer } = useThrelte();
-	if (!renderer) throw new Error();
-
-	const temp = new Vector3();
 
 	let grounded = $state(false);
 	let wasGrounded = $state(false);
 
-	const onGroundenter = $state(() => {
-		// console.log('Player grounded');
-	});
-	const onGroundexit = $state(() => {
-		// console.log('Player airborne');
-	});
+	// Respawn function
+	function respawn() {
+		if (!rigidBody) return;
 
-	$effect(() => {
-		if (grounded && !wasGrounded) {
-			onGroundenter?.();
-		} else if (!grounded && wasGrounded) {
-			onGroundexit?.();
-		}
-		wasGrounded = grounded;
-	});
+		// Reset position
+		rigidBody.setTranslation(SPAWN_POS, true);
+		// Reset velocity (stop falling momentum)
+		rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+		rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+
+		position = [SPAWN_POS.x, SPAWN_POS.y, SPAWN_POS.z];
+	}
+
+	const temp = new Vector3();
 
 	useTask(() => {
 		if (!rigidBody || !capsule) return;
 
 		const pos = rigidBody.translation();
+
+		// Report position for proximity loading
+		playerPosition.set(new Vector3(pos.x, pos.y, pos.z));
+
+		// Fall detection - respawn if below threshold
+		if (pos.y < FALL_THRESHOLD) {
+			respawn();
+			return;
+		}
+
+		// Multi-ray ground check for better edge detection
 		const capsuleBottom = pos.y - height / 2;
 		const rayDir = { x: 0, y: -1, z: 0 };
+		const checkRadius = radius * 0.6;
 
-		// Cast multiple rays in a circle pattern around capsule base
-		const checkRadius = radius * 0.6; // Check at 60% of capsule radius
 		const rayOffsets = [
-			{ x: 0, z: 0 }, // Center
-			{ x: checkRadius, z: 0 }, // Forward
-			{ x: -checkRadius, z: 0 }, // Back
-			{ x: 0, z: checkRadius }, // Right
-			{ x: 0, z: -checkRadius } // Left
+			{ x: 0, z: 0 },
+			{ x: checkRadius, z: 0 },
+			{ x: -checkRadius, z: 0 },
+			{ x: 0, z: checkRadius },
+			{ x: 0, z: -checkRadius }
 		];
 
 		grounded = false;
-
 		for (const offset of rayOffsets) {
-			// Rotate offset by capsule rotation to align with facing direction
 			const rotatedOffset = new Vector3(offset.x, 0, offset.z).applyEuler(capsule.rotation);
-
 			const rayOrigin = {
 				x: pos.x + rotatedOffset.x,
 				y: capsuleBottom + 0.05,
@@ -86,23 +84,15 @@
 			};
 
 			const ray = new Ray(rayOrigin, rayDir);
-			const hit = world.castRay(
-				ray,
-				0.2, // slightly longer for edge tolerance
-				true,
-				undefined,
-				undefined,
-				undefined,
-				rigidBody
-			);
+			const hit = world.castRay(ray, 0.2, true, undefined, undefined, undefined, rigidBody);
 
 			if (hit !== null) {
 				grounded = true;
-				break; // At least one point is grounded
+				break;
 			}
 		}
 
-		// --- Movement (unchanged) ---
+		// Movement logic
 		temp.set(0, 0, movement.forward - movement.backward);
 		temp.applyEuler(new Euler().copy(capsule.rotation)).multiplyScalar(speed);
 
@@ -115,20 +105,29 @@
 
 		rigidBody.setLinvel(temp, true);
 		position = [pos.x, pos.y, pos.z];
+
+		// Track grounded state changes
+		if (grounded && !wasGrounded) {
+			// Just landed - could trigger landing effects here
+		}
+		wasGrounded = grounded;
 	});
 </script>
 
-<T.PerspectiveCamera makeDefault fov={90}>
-	<Controller object={capRef} {movement} />
+<T.PerspectiveCamera makeDefault fov={75} near={0.1} far={1000}>
+	<Controller object={capsule} {movement} />
 </T.PerspectiveCamera>
 
-<!-- In Player.svelte -->
+<!-- Player capsule - this ref is passed to controller -->
 <T.Group bind:ref={capsule} position={[position[0], position[1], position[2]]} rotation.y={Math.PI}>
-	<RigidBody bind:rigidBody enabledRotations={[false, false, false]}>
+	<RigidBody
+		bind:rigidBody
+		enabledRotations={[false, false, false]}
+		position={[position[0], position[1], position[2]]}
+	>
 		<CollisionGroups groups={[0]}>
-			<Collider shape={'capsule'} args={[height / 2 - radius, radius]} />
+			<Collider shape={'capsule'} args={[0.55, 0.3]} />
 		</CollisionGroups>
 	</RigidBody>
-	<!-- Pass grounded here -->
-	<Character {movement} {grounded} character="male" />
+	<Character {movement} {grounded} character="female" />
 </T.Group>

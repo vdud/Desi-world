@@ -53,7 +53,8 @@ Title: Belly Dance
 								<T is={gltf.nodes._rootJoint} />
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_6"
 									geometry={gltf.nodes.Object_6.geometry}
 									material={gltf.materials.hair_map}
@@ -61,7 +62,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_7"
 									geometry={gltf.nodes.Object_7.geometry}
 									material={gltf.materials.hair_map}
@@ -69,7 +71,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_8"
 									geometry={gltf.nodes.Object_8.geometry}
 									material={gltf.materials.hair_map}
@@ -77,7 +80,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_9"
 									geometry={gltf.nodes.Object_9.geometry}
 									material={gltf.materials.hair_map}
@@ -85,7 +89,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_11"
 									geometry={gltf.nodes.Object_11.geometry}
 									material={gltf.materials.clothing_map}
@@ -93,7 +98,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_12"
 									geometry={gltf.nodes.Object_12.geometry}
 									material={gltf.materials.Eyebrow_map}
@@ -101,7 +107,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_13"
 									geometry={gltf.nodes.Object_13.geometry}
 									material={gltf.materials.Eyebrow_map}
@@ -109,7 +116,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_14"
 									geometry={gltf.nodes.Object_14.geometry}
 									material={gltf.materials.Eyelashes_map}
@@ -117,7 +125,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_15"
 									geometry={gltf.nodes.Object_15.geometry}
 									material={gltf.materials.Eye_map}
@@ -125,7 +134,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_16"
 									geometry={gltf.nodes.Object_16.geometry}
 									material={gltf.materials.Eye_map}
@@ -133,7 +143,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_18"
 									geometry={gltf.nodes.Object_18.geometry}
 									material={gltf.materials.Teeth_map}
@@ -141,7 +152,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_19"
 									geometry={gltf.nodes.Object_19.geometry}
 									material={gltf.materials.Eyelashes_map}
@@ -149,7 +161,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_20"
 									geometry={gltf.nodes.Object_20.geometry}
 									material={gltf.materials.Head_map}
@@ -157,7 +170,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_22"
 									geometry={gltf.nodes.Object_22.geometry}
 									material={gltf.materials.clothing_map}
@@ -165,7 +179,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_24"
 									geometry={gltf.nodes.Object_24.geometry}
 									material={gltf.materials.clothing_map}
@@ -173,7 +188,8 @@ Title: Belly Dance
 								/>
 								<T.SkinnedMesh
 									castShadow
-									receiveShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_26"
 									geometry={gltf.nodes.Object_26.geometry}
 									material={gltf.materials.Arm_map}

@@ -1,127 +1,122 @@
-<!-- src/lib/components/Player/Player Controller/ThirdPersonControls.svelte -->
+<!-- ThirdPersonControls.svelte -->
 <script lang="ts">
-	import { createEventDispatcher, onDestroy, onMount } from 'svelte';
-	import { Camera, Vector2, Vector3, Quaternion } from 'three';
+	import { Camera, Vector2, Vector3, Quaternion, Euler } from 'three';
 	import { useThrelte, useTask } from '@threlte/core';
+	import { onMount, onDestroy } from 'svelte';
 
-	const { camera } = useThrelte();
+	const { camera, renderer } = useThrelte();
 
-	const { object, movement } = $props();
+	// Props with defaults to prevent undefined errors
+	const { object, movement } = $props<{
+		object?: any;
+		movement?: {
+			forward?: number;
+			backward?: number;
+			left?: number;
+			right?: number;
+			up?: number;
+			rotation?: { rotateDelta?: Vector2; rotateSpeed?: number };
+		};
+	}>();
 
-	let idealOffset = { x: -0.5, y: 2, z: -4 };
-	let idealLookAt = { x: 0, y: 1, z: 5 };
+	// Camera configuration
+	const idealOffset = new Vector3(0, 3, -5);
+	const idealLookAt = new Vector3(0, 1, 0);
 
-	const currentPosition = new Vector3();
-	const currentLookAt = new Vector3();
+	// Current camera state
+	const currentPos = new Vector3(0, 5, -10);
+	const currentLook = new Vector3(0, 0, 0);
+	let isInitialized = false;
 
-	let isOrbiting = false;
-	let pointerDown = false;
-
-	// Mouse rotation tracking only
-	const rotateStart = new Vector2();
-	const rotateEnd = new Vector2();
-	const rotateDelta = new Vector2(); // Mouse delta only
+	// Mouse input
+	let rotateDelta = 0;
+	let isDragging = false;
+	let lastMouseX = 0;
 
 	const axis = new Vector3(0, 1, 0);
 	const rotationQuat = new Quaternion();
 
-	const { renderer, invalidate } = useThrelte();
-	if (!renderer) throw new Error();
+	// Initialize camera immediately when object becomes available
+	$effect(() => {
+		if (object && camera.current && !isInitialized) {
+			console.log('Initializing camera on object:', object.position);
 
-	const domElement = renderer.domElement;
+			// Hard snap to initial position immediately
+			const offset = idealOffset.clone().applyQuaternion(object.quaternion).add(object.position);
+			const look = object.position.clone().add(new Vector3(0, 1, 0));
 
-	const dispatch = createEventDispatcher();
+			currentPos.copy(offset);
+			currentLook.copy(look);
 
-	if (!renderer)
-		throw new Error('Threlte Context missing: Is <ThirdPersonControls> a child of <Canvas>?');
+			camera.current.position.copy(currentPos);
+			camera.current.lookAt(currentLook);
 
-	if (!($camera instanceof Camera)) {
-		throw new Error('Parent missing: <ThirdPersonControls> need to be a child of a <Camera>');
-	}
-
-	onMount(() => {
-		domElement.addEventListener('pointerdown', onPointerDown);
-		domElement.addEventListener('pointermove', onPointerMove);
-		domElement.addEventListener('pointerleave', onPointerLeave);
-		domElement.addEventListener('pointerup', onPointerUp);
-	});
-	onDestroy(() => {
-		domElement.removeEventListener('pointerdown', onPointerDown);
-		domElement.removeEventListener('pointermove', onPointerMove);
-		domElement.removeEventListener('pointerleave', onPointerLeave);
-		domElement.removeEventListener('pointerup', onPointerUp);
-	});
-
-	useTask(
-		'thirdPersonCamera',
-		(delta) => {
-			const cam = camera.current;
-
-			if (!object || !cam) return;
-
-			// Combine mouse and keyboard rotation, then apply speed and delta time once
-			const totalRotationX =
-				(rotateDelta.x + movement.rotation.rotateDelta.x) * movement.rotation.rotateSpeed;
-
-			rotationQuat.setFromAxisAngle(axis, -totalRotationX * delta);
-			object.quaternion.multiply(rotationQuat);
-
-			const offset = vectorFromObject(idealOffset);
-			const lookAt = vectorFromObject(idealLookAt);
-
-			const t = 1.0 - Math.pow(0.001, delta);
-			currentPosition.lerp(offset, t);
-			currentLookAt.lerp(lookAt, t);
-
-			cam.position.copy(currentPosition);
-			cam.lookAt(currentLookAt);
-		},
-		{ after: 'camera' }
-	);
-
-	function onPointerMove(event: PointerEvent) {
-		const { x, y } = event;
-		if (pointerDown && !isOrbiting) {
-			const distCheck =
-				Math.sqrt(Math.pow(x - rotateStart.x, 2) + Math.pow(y - rotateStart.y, 2)) > 10;
-			if (distCheck) {
-				isOrbiting = true;
-			}
+			isInitialized = true;
 		}
-		if (!isOrbiting) return;
+	});
 
-		rotateEnd.set(x, y);
-		// Store raw mouse delta (speed will be applied in useTask)
-		rotateDelta.subVectors(rotateEnd, rotateStart);
-		rotateStart.copy(rotateEnd);
-
-		invalidate();
-		dispatch('change');
+	// Input handlers
+	function onPointerDown(e: PointerEvent) {
+		isDragging = true;
+		lastMouseX = e.clientX;
+		domElement?.setCapture?.(); // Firefox compatibility
 	}
 
-	function onPointerDown(event: PointerEvent) {
-		const { x, y } = event;
-		rotateStart.set(x, y);
-		pointerDown = true;
+	function onPointerMove(e: PointerEvent) {
+		if (!isDragging) return;
+		const delta = e.clientX - lastMouseX;
+		rotateDelta += delta * 0.005; // sensitivity
+		lastMouseX = e.clientX;
 	}
 
 	function onPointerUp() {
-		rotateDelta.set(0, 0);
-		pointerDown = false;
-		isOrbiting = false;
+		isDragging = false;
+		rotateDelta = 0;
 	}
 
-	function onPointerLeave() {
-		rotateDelta.set(0, 0);
-		pointerDown = false;
-		isOrbiting = false;
-	}
+	let domElement: HTMLElement | undefined = renderer?.domElement;
 
-	function vectorFromObject(vec: { x: number; y: number; z: number }) {
-		const { x, y, z } = vec;
-		const ideal = new Vector3(x, y, z);
-		ideal.applyQuaternion(object.quaternion);
-		ideal.add(new Vector3(object.position.x, object.position.y, object.position.z));
-		return ideal;
-	}
+	onMount(() => {
+		domElement?.addEventListener('pointerdown', onPointerDown);
+		domElement?.addEventListener('pointermove', onPointerMove);
+		domElement?.addEventListener('pointerup', onPointerUp);
+		window.addEventListener('pointerup', onPointerUp); // Safety cleanup
+	});
+
+	onDestroy(() => {
+		domElement?.removeEventListener('pointerdown', onPointerDown);
+		domElement?.removeEventListener('pointermove', onPointerMove);
+		domElement?.removeEventListener('pointerup', onPointerUp);
+		window.removeEventListener('pointerup', onPointerUp);
+	});
+
+	useTask((delta) => {
+		// Safety check - if no object or camera, exit immediately
+		if (!object || !camera.current) return;
+
+		// Apply rotation from mouse (once per move) + keyboard (continuous)
+		const keyboardRot = (movement?.rotation?.rotateDelta?.x || 0) * delta;
+		const totalRot = rotateDelta + keyboardRot;
+
+		if (totalRot !== 0) {
+			rotationQuat.setFromAxisAngle(axis, -totalRot);
+			object.quaternion.multiply(rotationQuat);
+		}
+		rotateDelta = 0; // Clear mouse input
+
+		// Calculate desired camera position based on object
+		const offset = idealOffset.clone().applyQuaternion(object.quaternion).add(object.position);
+		const lookAt = idealLookAt.clone().applyQuaternion(object.quaternion).add(object.position);
+
+		// Hard snap if too far (spawn/respawn), otherwise smooth lerp
+		const dist = currentPos.distanceTo(offset);
+		const alpha = dist > 10 ? 1.0 : 0.15; // 1.0 = instant, 0.15 = smooth
+
+		currentPos.lerp(offset, alpha);
+		currentLook.lerp(lookAt, alpha);
+
+		// Apply to camera
+		camera.current.position.copy(currentPos);
+		camera.current.lookAt(currentLook);
+	});
 </script>

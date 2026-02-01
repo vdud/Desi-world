@@ -53,6 +53,8 @@ Title: EVE Nikke Suit
 								<T is={gltf.nodes._rootJoint} />
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_7"
 									geometry={gltf.nodes.Object_7.geometry}
 									material={gltf.materials.Eyes}
@@ -60,6 +62,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_9"
 									geometry={gltf.nodes.Object_9.geometry}
 									material={gltf.materials.Hair_Pin}
@@ -67,6 +71,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_11"
 									geometry={gltf.nodes.Object_11.geometry}
 									material={gltf.materials.EVE_Face}
@@ -74,6 +80,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_12"
 									geometry={gltf.nodes.Object_12.geometry}
 									material={gltf.materials.EVE_Eyelashes}
@@ -81,6 +89,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_13"
 									geometry={gltf.nodes.Object_13.geometry}
 									material={gltf.materials.EVE_EyeBrows}
@@ -88,6 +98,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_14"
 									geometry={gltf.nodes.Object_14.geometry}
 									material={gltf.materials.EVE_Teeth}
@@ -95,6 +107,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_16"
 									geometry={gltf.nodes.Object_16.geometry}
 									material={gltf.materials.Long_Ponytail_Hair}
@@ -102,6 +116,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_18"
 									geometry={gltf.nodes.Object_18.geometry}
 									material={gltf.materials.Nikke_Decal}
@@ -109,6 +125,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_19"
 									geometry={gltf.nodes.Object_19.geometry}
 									material={gltf.materials.Nikke_Suit}
@@ -116,6 +134,8 @@ Title: EVE Nikke Suit
 								/>
 								<T.SkinnedMesh
 									castShadow
+									receiveShadow={false}
+									frustumCulled={true}
 									name="Object_20"
 									geometry={gltf.nodes.Object_20.geometry}
 									material={gltf.materials.Nikke_Jacket}

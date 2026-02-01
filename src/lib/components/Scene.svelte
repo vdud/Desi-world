@@ -9,32 +9,46 @@
 	import { T } from '@threlte/core';
 
 	import Ground from './models/Ground.svelte';
-	import StartingRoom from './models/Starting-Room.svelte';
-	import GirlDancing1 from './models/girl-dancing-1.svelte';
-	import GirlDancing2 from './models/girl-dancing-2.svelte';
-	import Car1 from './models/car-1.svelte';
+	import ProximityLoader from './ProximityLoader.svelte';
+
+	const worldObjects = [
+		{
+			id: 'starting-room',
+			position: [0, 0, 0],
+			loader: () => import('./models/Starting-Room.svelte'),
+			priority: 10 // High priority (spawn area)
+		},
+		{
+			id: 'girl-dancing-1',
+			position: [5, 0, 5],
+			loader: () => import('./models/girl-dancing-1.svelte')
+		},
+		{
+			id: 'girl-dancing-2',
+			position: [-2.4, 0, -8],
+			loader: () => import('./models/girl-dancing-2.svelte')
+		},
+		{
+			id: 'car-1',
+			position: [10, 0, -5],
+			loader: () => import('./models/car-1.svelte')
+		}
+	];
 
 	const { movement } = $props();
+
+	let Environment = $state<ConstructorOfATypedSvelteComponent | null>(null);
+
+	// Load environment only after ground is ready
+	$effect(() => {
+		if ($isPlane && !Environment) {
+			// Dynamic import - code splits and loads asynchronously
+			import('./Environment.svelte').then((m) => {
+				Environment = m.default;
+			});
+		}
+	});
 </script>
-
-<Sky elevation={1} castShadow turbidity={10} rayleigh={4} mieCoefficient={0.005} />
-<!-- <Stars count={500} radius={80} depth={150} speed={1} /> -->
-
-<T.DirectionalLight
-	position={[1, 10, -10]}
-	intensity={1.5}
-	castShadow
-	shadow.mapSize={[4096, 4096]}
-	shadow.bias={-0.0001}
-	shadow.normalBias={0.02}
-	shadow.radius={10}
-	shadow.camera.near={0.5}
-	shadow.camera.far={50}
-	shadow.camera.left={-20}
-	shadow.camera.right={20}
-	shadow.camera.top={20}
-	shadow.camera.bottom={-20}
-/>
 
 <!-- <Environment url="/hdr.exr" /> -->
 
@@ -44,12 +58,14 @@
 <CollisionGroups groups={[0, 15]}>
 	<RigidBody type={'fixed'}>
 		<Ground />
-		<StartingRoom />
-		<GirlDancing1 />
-		<GirlDancing2 />
-		<Car1 />
 	</RigidBody>
 </CollisionGroups>
+
+<!-- {#if Environment}
+	<svelte:component this={Environment} />
+{/if} -->
+
+<ProximityLoader objects={worldObjects} loadRadius={25} unloadRadius={60} loadDelay={150} />
 
 {#if $isPlane}
 	<Player {movement} />
