@@ -7,7 +7,7 @@ Command: npx @threlte/gltf@3.0.1 Starting-Room.glb --transform
 	import { T } from '@threlte/core';
 	import { useDraco, useGltf } from '@threlte/extras';
 	import { AutoColliders } from '@threlte/rapier';
-	import type { RenderProps } from './render-props';
+	import type { RenderProps } from '../../types/render-props';
 
 	let { fallback, error, children, ref = $bindable(), ...props } = $props<RenderProps>();
 

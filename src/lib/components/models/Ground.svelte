@@ -4,7 +4,7 @@
 	import { useDraco, useGltf } from '@threlte/extras';
 	import { AutoColliders } from '@threlte/rapier';
 	import { isPlane } from '$lib/stores/commonStores';
-	import type { RenderProps } from './render-props';
+	import type { RenderProps } from '../../types/render-props';
 
 	let { fallback, error, children, ref = $bindable(), ...props }: RenderProps = $props();
 
