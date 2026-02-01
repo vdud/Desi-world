@@ -25,7 +25,10 @@
 
 	// --- Joystick State ---
 	const MAX_RADIUS = 50;
-	const DEADZONE = 5;
+
+	// Active deadzone values (using percentage 0-1 instead of pixels)
+	const DEADZONE = 0.15; // 15% - general movement deadzone
+	const ROTATION_DEADZONE = 0.25; // 25% - wider deadzone for rotation to help go straight
 
 	let activeTouchId: number | null = $state(null);
 	let origin = $state({ x: 0, y: 0 });
@@ -70,8 +73,6 @@
 	function toggleFullscreen() {
 		const docEl = document.documentElement;
 
-		// Use requestAnimationFrame to ensure the click event is fully processed
-		// before asking the browser for fullscreen (helps with Safari mobile delays)
 		requestAnimationFrame(() => {
 			if (!document.fullscreenElement && !(docEl as any).webkitFullscreenElement) {
 				if (docEl.requestFullscreen) {
@@ -93,7 +94,6 @@
 
 	onMount(() => {
 		const handleFullscreenChange = () => {
-			// Check both standard and webkit properties
 			isFullscreen = !!(document.fullscreenElement || (document as any).webkitFullscreenElement);
 		};
 
@@ -106,7 +106,7 @@
 		};
 	});
 
-	// --- Joystick Math ---
+	// --- Joystick Math (DYNAMIC/ANALOG) ---
 
 	function updateMovementState() {
 		const dx = current.x - origin.x;
@@ -123,11 +123,11 @@
 		}
 		clampedPos = { x: visualX, y: visualY };
 
-		const inputX = visualX / MAX_RADIUS;
-		const inputY = visualY / MAX_RADIUS;
+		const inputX = visualX / MAX_RADIUS; // -1 to 1 (left to right)
+		const inputY = visualY / MAX_RADIUS; // -1 to 1 (up to down)
 
-		// Deadzone
-		if (distance < DEADZONE) {
+		// General deadzone - ignore tiny movements
+		if (Math.abs(inputX) < DEADZONE && Math.abs(inputY) < DEADZONE) {
 			onMovementChange('forward', 0);
 			onMovementChange('backward', 0);
 			onMovementChange('left', 0);
@@ -136,33 +136,50 @@
 			return;
 		}
 
-		// Direction Logic
-		let isMovingBackward = false;
+		// --- DYNAMIC MOVEMENT (0-1 range based on joystick distance) ---
+		const moveAmount = Math.min(Math.abs(inputY) / (1 - DEADZONE), 1); // Normalize 0-1
 
-		if (inputY < 0) {
-			// Swipe Up -> Forward
-			onMovementChange('forward', 1);
+		if (inputY < -DEADZONE) {
+			// Forward with analog intensity (gentle push = slow walk, full push = run)
+			onMovementChange('forward', moveAmount);
 			onMovementChange('backward', 0);
-		} else {
-			// Swipe Down -> Backward
-			onMovementChange('backward', 1);
+		} else if (inputY > DEADZONE) {
+			// Backward with analog intensity
+			onMovementChange('backward', moveAmount);
 			onMovementChange('forward', 0);
-			isMovingBackward = true;
+		} else {
+			// Near center Y - no forward/back movement
+			onMovementChange('forward', 0);
+			onMovementChange('backward', 0);
 		}
 
-		// --- Rotation Logic (Car Reverse) ---
-		const rotationDirection = isMovingBackward ? 1 : -1;
+		// --- DYNAMIC ROTATION (only when horizontal input exceeds deadzone) ---
+		if (Math.abs(inputX) > ROTATION_DEADZONE) {
+			// Calculate rotation intensity 0-1 based on how far past deadzone
+			const rotationAmount = (Math.abs(inputX) - ROTATION_DEADZONE) / (1 - ROTATION_DEADZONE);
 
-		if (inputX < 0) {
-			// Swipe Left
-			onMovementChange('left', 1);
-			onMovementChange('right', 0);
-			movement.rotation.rotateDelta.x = rotationDirection * 2 * movement.rotation.rotateSpeed;
+			// Reverse steering when going backward (car-like controls)
+			const isMovingBackward = inputY > DEADZONE;
+			const rotationDirection = isMovingBackward ? 1 : -1;
+			const turnDirection = inputX < 0 ? 1 : -1; // Left = positive, Right = negative
+
+			// Send analog values (0-1) for left/right
+			if (inputX < 0) {
+				onMovementChange('left', rotationAmount);
+				onMovementChange('right', 0);
+			} else {
+				onMovementChange('right', rotationAmount);
+				onMovementChange('left', 0);
+			}
+
+			// Scale rotation by intensity: small drift = slow turn, full push = fast turn
+			movement.rotation.rotateDelta.x =
+				turnDirection * rotationDirection * rotationAmount * 2 * movement.rotation.rotateSpeed;
 		} else {
-			// Swipe Right
-			onMovementChange('right', 1);
+			// Within horizontal deadzone - GO STRAIGHT, no rotation
 			onMovementChange('left', 0);
-			movement.rotation.rotateDelta.x = -rotationDirection * 2 * movement.rotation.rotateSpeed;
+			onMovementChange('right', 0);
+			movement.rotation.rotateDelta.x = 0;
 		}
 	}
 
@@ -186,7 +203,6 @@
 	onpointercancel={handlePointerEnd}
 >
 	<!-- Fullscreen Toggle Button -->
-	<!-- Added explicit touch-action handling to the button to ensure the click registers on mobile -->
 	<button
 		class="icon-btn fullscreen-btn"
 		onclick={toggleFullscreen}
@@ -194,7 +210,6 @@
 		aria-label="Toggle Fullscreen"
 	>
 		{#if isFullscreen}
-			<!-- Shrink Icon -->
 			<svg
 				width="24"
 				height="24"
@@ -208,7 +223,6 @@
 				/>
 			</svg>
 		{:else}
-			<!-- Expand Icon -->
 			<svg
 				width="24"
 				height="24"
@@ -223,9 +237,7 @@
 	</button>
 
 	{#if activeTouchId !== null}
-		<!-- Joystick Base -->
 		<div class="joystick-base" style="left: {origin.x}px; top: {origin.y}px;"></div>
-		<!-- Joystick Knob -->
 		<div
 			class="joystick-knob"
 			style="left: {origin.x + clampedPos.x}px; top: {origin.y + clampedPos.y}px;"
@@ -246,19 +258,13 @@
 </div>
 
 <style>
-	/* 
-       CRITICAL FOR MOBILE SAFARI: 
-       Using 100dvh (Dynamic Viewport Height) ensures the screen stretches 
-       to fill the visible area even when the URL bar expands/contracts.
-    */
 	:global(html, body) {
 		height: 100dvh;
-		overflow: hidden; /* Prevent scroll rubber-banding */
+		overflow: hidden;
 	}
 
 	.touch-layer {
 		position: fixed;
-		/* Use safe-area-inset to push content under the notch/home indicator */
 		top: 0;
 		left: 0;
 		right: 0;
@@ -267,7 +273,6 @@
 		touch-action: none;
 		user-select: none;
 		-webkit-user-select: none;
-		/* Ensure background is black/colored so no white gaps show */
 		background-color: transparent;
 	}
 
@@ -277,7 +282,7 @@
 		width: 44px;
 		height: 44px;
 		border-radius: 12px;
-		background: rgba(0, 0, 0, 0.5); /* Darker for better visibility against light backgrounds */
+		background: rgba(0, 0, 0, 0.5);
 		backdrop-filter: blur(10px);
 		border: 1px solid rgba(255, 255, 255, 0.2);
 		color: rgba(255, 255, 255, 0.9);

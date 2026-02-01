@@ -122,11 +122,13 @@
 	<Controller object={capRef} {movement} />
 </T.PerspectiveCamera>
 
+<!-- In Player.svelte -->
 <T.Group bind:ref={capsule} position={[position[0], position[1], position[2]]} rotation.y={Math.PI}>
 	<RigidBody bind:rigidBody enabledRotations={[false, false, false]}>
 		<CollisionGroups groups={[0]}>
 			<Collider shape={'capsule'} args={[height / 2 - radius, radius]} />
 		</CollisionGroups>
 	</RigidBody>
-	<Character {movement} character="male" />
+	<!-- Pass grounded here -->
+	<Character {movement} {grounded} character="male" />
 </T.Group>

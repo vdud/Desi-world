@@ -5,11 +5,14 @@
 
 	import { Sky } from '@threlte/extras';
 
-	import MainGate from './models/MainGate.svelte';
 	import { isPlane } from '$lib/stores/commonStores';
-	// import Ground from './models/Ground.svelte';
 	import { T } from '@threlte/core';
-	import GenGround from './models/GenGround.svelte';
+
+	import Ground from './models/Ground.svelte';
+	import StartingRoom from './models/Starting-Room.svelte';
+	import GirlDancing1 from './models/girl-dancing-1.svelte';
+	import GirlDancing2 from './models/girl-dancing-2.svelte';
+	import Car1 from './models/car-1.svelte';
 
 	const { movement } = $props();
 </script>
@@ -40,9 +43,11 @@
 
 <CollisionGroups groups={[0, 15]}>
 	<RigidBody type={'fixed'}>
-		<!-- <Ground /> -->
-		<GenGround />
-		<MainGate />
+		<Ground />
+		<StartingRoom />
+		<GirlDancing1 />
+		<GirlDancing2 />
+		<Car1 />
 	</RigidBody>
 </CollisionGroups>
 

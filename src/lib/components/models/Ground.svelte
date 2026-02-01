@@ -17,7 +17,7 @@ Command: npx @threlte/gltf@3.0.1 /Users/varundudeja/Documents/My Codes/Antigravi
 
 	const dracoLoader = useDraco();
 
-	const gltf = useGltf('/models/world-assets/Plane.glb', { dracoLoader });
+	const gltf = useGltf('/models/world-assets/Ground-transformed.glb', { dracoLoader });
 	gltf.then(() => ($isPlane = true));
 </script>
 
@@ -25,16 +25,11 @@ Command: npx @threlte/gltf@3.0.1 /Users/varundudeja/Documents/My Codes/Antigravi
 	{#await gltf}
 		{@render fallback?.()}
 	{:then gltf}
-		<AutoColliders shape={'trimesh'}>
+		<AutoColliders shape="cuboid">
 			<T.Mesh
-				geometry={gltf.nodes.Plane.geometry}
-				material={new MeshStandardMaterial({
-					map: gltf.nodes.Plane.material.map,
-					color: 'yellow',
-					roughness: 0.8
-				})}
-				receiveShadow={true}
-				castShadow={false}
+				geometry={gltf.nodes.Ground.geometry}
+				material={gltf.nodes.Ground.material}
+				receiveShadow
 			/>
 		</AutoColliders>
 	{:catch err}

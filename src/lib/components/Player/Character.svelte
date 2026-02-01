@@ -1,114 +1,210 @@
-<!-- src/lib/components/Player/Character.svelte -->
 <script lang="ts">
 	import { T, useTask } from '@threlte/core';
 	import { useDraco, useGltf } from '@threlte/extras';
-	import { DEG2RAD } from 'three/src/math/MathUtils.js';
-	import { AnimationMixer, LoopRepeat } from 'three';
+	import { AnimationMixer, LoopRepeat, LoopOnce } from 'three';
+	import type { Mesh } from 'three';
 
 	interface Props {
-		movement: {
-			forward: number;
-			backward: number;
-		};
+		movement: { forward: number; backward: number; up: number };
+		grounded?: boolean;
 		character?: 'female' | 'male';
 	}
 
-	let { movement, character = 'female' }: Props = $props();
+	let { movement, grounded = true, character = 'female' }: Props = $props();
 
-	let mixer = $state<AnimationMixer>();
-	let currentActionKey = $state<'idle' | 'run'>('idle');
+	let mixer = $state<AnimationMixer | null>(null);
+	let isReady = $state(false);
+
+	type AnimState = 'idle' | 'walk' | 'run' | 'jumpStart' | 'jumpMid' | 'jumpEnd';
+	type JumpPhase = 'takeoff' | 'hang' | 'landing' | 'landing_pending' | 'none';
+
+	let currentState = $state<AnimState>('idle');
+	let jumpPhase = $state<JumpPhase>('none');
+	let wasGrounded = $state(true);
+	let jumpPressed = $state(false);
+
+	const actions = $state<Partial<Record<AnimState, any>>>({});
+
+	// Rotation state
+	let currentRotation = $state(0);
 	let targetRotation = $state(0);
-	let actions = $state<{ idle?: any; run?: any }>({});
+	const ROTATION_SPEED = 8;
 
 	const dracoLoader = useDraco();
 
-	// Load character model
-	const charPath =
-		character === 'female' ? '/models/female-transformed.glb' : '/models/male-transformed.glb';
-	const charGltf = useGltf(charPath, { dracoLoader });
+	// Fix: Make charGltf derived so it updates when character changes
+	const charGltf = $derived(
+		useGltf(
+			character === 'female'
+				? '/models/Characters/female-transformed.glb'
+				: '/models/Characters/male-transformed.glb',
+			{ dracoLoader }
+		)
+	);
 
-	// Load animation files
+	// Movement animations
 	const idleGltf = useGltf('/models/Animations/idle-transformed.glb', { dracoLoader });
 	const runGltf = useGltf('/models/Animations/run-transformed.glb', { dracoLoader });
-	// Initialize once when all loaded - use untrack to prevent loops
+	const walkingGltf = useGltf('/models/Animations/walking-transformed.glb', { dracoLoader });
 
-	function initMixer(scene: any) {
-		if (mixer) {
-			mixer.stopAllAction();
+	// Three-part jump animations
+	const jumpStartGltf = useGltf('/models/Animations/jump-start-transformed.glb', { dracoLoader });
+	const jumpMidGltf = useGltf('/models/Animations/jump-mid-transformed.glb', { dracoLoader });
+	const jumpEndGltf = useGltf('/models/Animations/jump-end-transformed.glb', { dracoLoader });
+
+	function getGroundState(): AnimState {
+		const moveAmount = Math.max(movement.forward, movement.backward);
+		if (moveAmount > 0.7) return 'run';
+		if (moveAmount > 0.1) return 'walk';
+		return 'idle';
+	}
+
+	function switchTo(target: AnimState) {
+		if (!isReady || !mixer) return;
+		if (currentState === target) return;
+
+		const prevAction = actions[currentState];
+		const nextAction = actions[target];
+
+		if (!nextAction) {
+			console.warn('Animation not loaded:', target);
+			return;
 		}
 
+		if (prevAction) {
+			prevAction.fadeOut(0.15);
+		}
+
+		nextAction.reset().fadeIn(0.15).play();
+		currentState = target;
+	}
+
+	async function initMixer(scene: any) {
 		const newMixer = new AnimationMixer(scene);
 
-		// Wait for animations to load
-		Promise.all([$idleGltf, $runGltf]).then(([idle, run]) => {
-			if (!idle?.animations?.[0] || !run?.animations?.[0]) {
-				console.error('Missing animations:', { idle, run });
-				return;
-			}
+		const [idle, run, walk, jumpStart, jumpMid, jumpEnd] = await Promise.all([
+			$idleGltf,
+			$runGltf,
+			$walkingGltf,
+			$jumpStartGltf,
+			$jumpMidGltf,
+			$jumpEndGltf
+		]);
 
-			// Create actions properly
-			const idleAction = newMixer.clipAction(idle.animations[0]);
-			idleAction.setLoop(LoopRepeat, Infinity);
-			idleAction.clampWhenFinished = false;
-
-			const runAction = newMixer.clipAction(run.animations[0]);
-			runAction.setLoop(LoopRepeat, Infinity);
-			runAction.clampWhenFinished = false;
-
-			actions = {
-				idle: idleAction,
-				run: runAction
-			};
-
-			// Start idle immediately
-			idleAction.play();
-			currentActionKey = 'idle';
-			mixer = newMixer;
-		});
-	}
-
-	function switchTo(nextKey: 'idle' | 'run') {
-		if (!mixer || !actions.idle || !actions.run) return;
-		if (currentActionKey === nextKey) return;
-
-		const current = actions[currentActionKey];
-		const next = actions[nextKey];
-
-		// Reset next action to start from beginning
-		next.reset();
-		next.setEffectiveWeight(1);
-		next.setEffectiveTimeScale(1);
-		next.enabled = true;
-
-		if (current) {
-			// Smooth crossfade
-			current.crossFadeTo(next, 0.3, true);
+		if (
+			!idle?.animations?.[0] ||
+			!run?.animations?.[0] ||
+			!walk?.animations?.[0] ||
+			!jumpStart?.animations?.[0] ||
+			!jumpMid?.animations?.[0] ||
+			!jumpEnd?.animations?.[0]
+		) {
+			console.error('Missing animations');
+			return;
 		}
 
-		next.play();
-		currentActionKey = nextKey;
+		actions.idle = newMixer.clipAction(idle.animations[0]);
+		actions.idle.setLoop(LoopRepeat, Infinity);
+
+		actions.run = newMixer.clipAction(run.animations[0]);
+		actions.run.setLoop(LoopRepeat, Infinity);
+
+		actions.walk = newMixer.clipAction(walk.animations[0]);
+		actions.walk.setLoop(LoopRepeat, Infinity);
+
+		actions.jumpStart = newMixer.clipAction(jumpStart.animations[0]);
+		actions.jumpStart.setLoop(LoopOnce, 1);
+		actions.jumpStart.clampWhenFinished = true;
+
+		actions.jumpMid = newMixer.clipAction(jumpMid.animations[0]);
+		actions.jumpMid.setLoop(LoopOnce, 1);
+		actions.jumpMid.clampWhenFinished = false;
+
+		actions.jumpEnd = newMixer.clipAction(jumpEnd.animations[0]);
+		actions.jumpEnd.setLoop(LoopOnce, 1);
+		actions.jumpEnd.clampWhenFinished = true;
+
+		newMixer.addEventListener('finished', (e) => {
+			if (e.action === actions.jumpStart && jumpPhase === 'takeoff') {
+				jumpPhase = 'hang';
+				if (actions.jumpMid) {
+					actions.jumpMid.timeScale = 1;
+					actions.jumpMid.time = 0;
+				}
+				switchTo('jumpMid');
+			} else if (e.action === actions.jumpEnd && jumpPhase === 'landing') {
+				jumpPhase = 'none';
+				switchTo(getGroundState());
+			}
+		});
+
+		actions.idle.play();
+		currentState = 'idle';
+		mixer = newMixer;
+		isReady = true;
 	}
 
-	// Update loop
 	useTask((delta) => {
-		mixer?.update(delta);
-	});
+		if (!isReady || !mixer) return;
 
-	// Movement logic
-	let wasMoving = $state(false);
+		mixer.update(delta);
 
-	$effect(() => {
-		if (!mixer) return;
+		const rotDiff = targetRotation - currentRotation;
+		let adjustedDiff = rotDiff;
+		if (rotDiff > Math.PI) adjustedDiff = rotDiff - 2 * Math.PI;
+		if (rotDiff < -Math.PI) adjustedDiff = rotDiff + 2 * Math.PI;
+		currentRotation += adjustedDiff * Math.min(delta * ROTATION_SPEED, 1);
 
-		const isMoving = movement.forward > 0 || movement.backward === 1;
+		const justLanded = grounded && !wasGrounded;
+		wasGrounded = grounded;
 
-		// Rotation
-		targetRotation = movement.backward === 1 ? 180 * DEG2RAD : 0;
+		if (movement.up > 0 && !jumpPressed) {
+			jumpPressed = true;
+		} else if (movement.up === 0) {
+			jumpPressed = false;
+		}
 
-		// Only switch on state change
-		if (isMoving !== wasMoving) {
-			wasMoving = isMoving;
-			switchTo(isMoving ? 'run' : 'idle');
+		if (jumpPressed && grounded && jumpPhase === 'none') {
+			jumpPhase = 'takeoff';
+			switchTo('jumpStart');
+		}
+
+		if (currentState === 'jumpMid' && jumpPhase === 'hang' && actions.jumpMid) {
+			const action = actions.jumpMid;
+			const duration = action.getClip().duration;
+			const currentTime = action.time;
+
+			const threshold = 0.05;
+
+			if (action.timeScale > 0 && currentTime >= duration - threshold) {
+				action.timeScale = -1;
+				action.time = duration;
+			} else if (action.timeScale < 0 && currentTime <= threshold) {
+				action.timeScale = 1;
+				action.time = 0;
+			}
+		}
+
+		if (justLanded) {
+			if (jumpPhase === 'hang') {
+				jumpPhase = 'landing';
+				switchTo('jumpEnd');
+			} else if (jumpPhase === 'takeoff') {
+				jumpPhase = 'landing_pending';
+			}
+		}
+
+		if (jumpPhase === 'landing_pending' && currentState !== 'jumpStart') {
+			jumpPhase = 'landing';
+			switchTo('jumpEnd');
+		}
+
+		if (grounded && jumpPhase === 'none') {
+			targetRotation = movement.backward > 0 ? Math.PI : 0;
+			const target = getGroundState();
+			if (currentState !== target) {
+				switchTo(target);
+			}
 		}
 	});
 </script>
@@ -117,16 +213,14 @@
 	<T
 		is={$charGltf.scene}
 		position={[0, -0.86, 0]}
-		rotation.y={targetRotation}
+		rotation.y={currentRotation}
 		oncreate={(ref) => {
-			// Traverse and enable shadows on all meshes
 			ref.traverse((child) => {
-				if (child.isMesh) {
+				if ((child as Mesh).isMesh) {
 					child.castShadow = true;
 					child.receiveShadow = true;
 				}
 			});
-
 			initMixer(ref);
 			return () => {
 				mixer?.stopAllAction();
