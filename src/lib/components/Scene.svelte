@@ -5,6 +5,8 @@
 
 	import { isPlane } from '$lib/stores/commonStores';
 	import { T } from '@threlte/core';
+	import NetworkPlayer from './NetworkPlayer.svelte';
+	import { network } from '$lib/network/network.svelte';
 
 	import Ground from './models/Ground.svelte';
 	import ProximityLoader from './ProximityLoader.svelte';
@@ -64,4 +66,8 @@
 
 {#if $isPlane}
 	<Player {movement} />
+
+	{#each network.otherPlayers.entries() as [id, state] (id)}
+		<NetworkPlayer {state} />
+	{/each}
 {/if}

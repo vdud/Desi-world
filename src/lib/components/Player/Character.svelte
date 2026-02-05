@@ -217,7 +217,7 @@
 {#if $charGltf}
 	<T
 		is={$charGltf.scene}
-		position={characterPosition}
+		position={[...characterPosition]}
 		rotation.y={currentRotation}
 		oncreate={(ref) => {
 			ref.traverse((child) => {

@@ -1,0 +1,5 @@
+{
+	"name": "antigravity-server",
+	"main": "src/party/server.ts",
+	"compatibilityDate": "2025-02-05"
+}
