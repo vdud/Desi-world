@@ -28,7 +28,3 @@ Future AI sessions must check this file to understand the latest state of the pr
   - The look reflects accurately for other players over the network.
 
 ---
-
-## [Advanced Shadow System] - 2026-02-07
-
-...
