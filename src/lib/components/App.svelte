@@ -3,8 +3,9 @@
 	import { World } from '@threlte/rapier';
 	import Scene from './Scene.svelte';
 	import InterfaceUi from './Player/Player Controller/InterfaceUI.svelte';
-	import { Vector2 } from 'three';
-	import { Sky, SoftShadows } from '@threlte/extras';
+	import { Vector2, PCFSoftShadowMap } from 'three';
+	import { Environment, Sky, Stars } from '@threlte/extras';
+	import Sun from './Sun.svelte';
 
 	const movement = $state({
 		forward: 0,
@@ -86,26 +87,18 @@
 
 <InterfaceUi {movement} {isInteracting} onMovementChange={handleMovementChange} />
 
-<Canvas>
-	<Sky elevation={1} castShadow turbidity={10} rayleigh={4} mieCoefficient={0.005} />
-	<!-- <Stars count={500} radius={80} depth={150} speed={1} /> -->
+<Canvas shadows={{ type: PCFSoftShadowMap }}>
+	<Sky elevation={1} turbidity={10} rayleigh={4} mieCoefficient={0.005} />
 
-	<T.DirectionalLight
-		position={[1, 10, -10]}
-		intensity={1.5}
-		castShadow
-		shadow.mapSize={[4096, 4096]}
-		shadow.bias={-0.0001}
-		shadow.normalBias={0.02}
-		shadow.radius={10}
-		shadow.camera.near={0.5}
-		shadow.camera.far={50}
-		shadow.camera.left={-20}
-		shadow.camera.right={20}
-		shadow.camera.top={20}
-		shadow.camera.bottom={-20}
-	/>
-	<!-- <SoftShadows /> -->
+	<!-- Lighting only, no background -->
+	<!-- <Environment url="/hdr.exr" isBackground={false} /> -->
+
+	<!-- Ghost Buildings Layer -->
+
+	<T.FogExp2 color="#cce0ff" density={1.015} />
+	<Stars count={500} radius={80} depth={150} speed={1} />
+
+	<Sun />
 	<World>
 		<Scene {movement} />
 	</World>

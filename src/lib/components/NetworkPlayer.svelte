@@ -61,26 +61,50 @@
 		<!-- 3D Spatial Audio -->
 		<T.PositionalAudio
 			args={[$audioListener]}
-			refDistance={20}
-			rolloffFactor={1}
+			refDistance={1}
+			maxDistance={25}
+			distanceModel="linear"
+			panningModel="HRTF"
 			oncreate={(ref: THREE.PositionalAudio) => {
-				console.log(
-					'🔊 Creating PositionalAudio for stream:',
-					stream.id,
-					'Active:',
-					stream.active,
-					'Tracks:',
-					stream.getAudioTracks().length
-				);
-				if (stream) ref.setMediaStreamSource(stream);
-				ref.setVolume(1.0);
+				if (stream) {
+					const tracks = stream.getAudioTracks();
+
+					if (tracks.length > 0) {
+						ref.setMediaStreamSource(stream);
+						ref.setVolume(2.0); // Boost volume
+						// Ensure the context is running
+						if (ref.context.state === 'suspended') {
+							console.warn('   - AudioContext suspended! Attempting resume...');
+							ref.context.resume();
+						}
+					} else {
+						console.warn('   - No audio tracks found in stream!');
+					}
+				}
 			}}
 		/>
 
-		<!-- FALLBACK / DEBUG AUDIO -->
-		<audio use:srcObject={stream} autoplay playsinline style="display:none;"></audio>
+		<!-- FALLBACK / DEBUG AUDIO - Visible for testing -->
+		<div
+			style="position: absolute; top: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 10px; pointer-events: auto;"
+		>
+			<strong>Debug Audio: {props.state.id}</strong><br />
+			Stream Active: {stream.active}<br />
+			Tracks: {stream.getAudioTracks().length}<br />
+			<!-- Muted by default so it doesn't override spatial audio -->
+			<audio use:srcObject={stream} playsinline controls muted style="width: 200px; height: 30px;"
+			></audio>
+		</div>
 	{/if}
-	<RigidBody type="kinematicPosition" position={[currentX, currentY, currentZ]}>
+
+	<!-- DEBUG INDICATOR: Red = No Audio Stream, Green = Audio Stream Active -->
+	<T.Mesh position={[0, 2.2, 0]}>
+		<T.SphereGeometry args={[0.15]} />
+		<T.MeshBasicMaterial
+			color={stream && stream.getAudioTracks().length > 0 ? '#00ff00' : '#ff0000'}
+		/>
+	</T.Mesh>
+	<RigidBody type="kinematicPosition">
 		<CollisionGroups groups={[0]}>
 			<Collider shape={'capsule'} args={[0.55, 0.3]} />
 		</CollisionGroups>
@@ -91,5 +115,8 @@
 		movement={props.state.movement}
 		grounded={props.state.grounded}
 		character={props.state.character}
+		color={props.state.color}
+		metalness={props.state.metalness}
+		roughness={props.state.roughness}
 	/>
 </T.Group>

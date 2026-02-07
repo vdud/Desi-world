@@ -3,14 +3,30 @@
 	import { useDraco, useGltf } from '@threlte/extras';
 	import { AnimationMixer, LoopRepeat, LoopOnce } from 'three';
 	import type { Mesh } from 'three';
+	import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils.js';
+
+	import { MeshStandardMaterial } from 'three';
+	import type { Material } from 'three';
 
 	interface Props {
-		movement: { forward: number; backward: number; up: number };
+		movement: { forward: number; backward: number; left: number; right: number; up: number };
 		grounded?: boolean;
-		character?: 'female' | 'male';
+		character?: string;
+		color?: string;
+		metalness?: number;
+		roughness?: number;
 	}
 
-	let { movement, grounded = true, character = 'female' }: Props = $props();
+	let {
+		movement,
+		grounded = true,
+		character = 'anon',
+		color = '#ffffff',
+		metalness = 0.5,
+		roughness = 0.5
+	}: Props = $props();
+
+	// ... (mixer state)
 
 	let mixer = $state<AnimationMixer | null>(null);
 	let isReady = $state(false);
@@ -32,20 +48,15 @@
 
 	const dracoLoader = useDraco();
 
-	// Dynamic position based on character model
-	const characterPosition = $derived(
-		character === 'female' ? ([0, -0.86, 0] as const) : ([0, -0.91, 0] as const)
-	);
+	// Dynamic position based on character model (Adjusted for Anon)
+	const characterPosition = [0, -0.9, 0] as const;
 
-	// Fix: Make charGltf derived so it updates when character changes
-	const charGltf = $derived(
-		useGltf(
-			character === 'female'
-				? '/models/Characters/female-transformed.glb'
-				: '/models/Characters/male-transformed.glb',
-			{ dracoLoader }
-		)
-	);
+	// Always load Anon
+	const charGltf = useGltf('/models/Characters/anon-transformed.glb', { dracoLoader });
+
+	// Clone the scene for this instance using SkeletonUtils
+	// This ensures each player has their own SkinnedMesh and Skeleton
+	const scene = $derived($charGltf ? SkeletonUtils.clone($charGltf.scene) : undefined);
 
 	// Movement animations
 	const idleGltf = useGltf('/models/Animations/idle-transformed.glb', { dracoLoader });
@@ -58,7 +69,7 @@
 	const jumpEndGltf = useGltf('/models/Animations/jump-end-transformed.glb', { dracoLoader });
 
 	function getGroundState(): AnimState {
-		const moveAmount = Math.max(movement.forward, movement.backward);
+		const moveAmount = Math.max(movement.forward, movement.backward, movement.left, movement.right);
 		if (moveAmount > 0.7) return 'run';
 		if (moveAmount > 0.1) return 'walk';
 		return 'idle';
@@ -205,7 +216,31 @@
 		}
 
 		if (grounded && jumpPhase === 'none') {
-			targetRotation = movement.backward > 0 ? Math.PI : 0;
+			// Calculate target rotation based on movement vector (local space)
+			// Z is forward/backward (forward is +1 in input, but -Z in 3D space usually. Here we just map inputs)
+			// We want the character to face the direction of movement relative to the camera/capsule.
+			// The capsule rotates with camera Y. The character is inside the capsule.
+
+			// Input Vector:
+			// Forward (w) = +1 Z
+			// Right (d) = -1 X (in local space rotation)
+
+			// Input Vector (Inverted X to match Player.svelte physics):
+			// Forward (w) = +1 Z
+			// Right (d) = -1 X (in local space rotation)
+
+			const x = movement.left - movement.right;
+			const z = movement.forward - movement.backward;
+
+			if (x !== 0 || z !== 0) {
+				// Calculate angle: 0 is forward (+Z), Math.PI is backward (-Z)
+				// atan2(x, z) gives angle from Z axis
+				// We need to invert X because in Three.js/Right-hand rule:
+				// +X is Left, -X is Right? No, +X is Right.
+				// Let's test standard: atan2(x, z)
+				targetRotation = Math.atan2(x, z);
+			}
+
 			const target = getGroundState();
 			if (currentState !== target) {
 				switchTo(target);
@@ -214,9 +249,9 @@
 	});
 </script>
 
-{#if $charGltf}
+{#if scene}
 	<T
-		is={$charGltf.scene}
+		is={scene}
 		position={[...characterPosition]}
 		rotation.y={currentRotation}
 		oncreate={(ref) => {
@@ -224,6 +259,17 @@
 				if ((child as Mesh).isMesh) {
 					child.castShadow = true;
 					child.receiveShadow = true;
+
+					// Apply custom material properties
+					const mesh = child as Mesh;
+					if (mesh.material) {
+						// Clone material so it doesn't affect other players
+						const newMat = (mesh.material as Material).clone();
+						if ('color' in newMat) (newMat as any).color.set(color);
+						if ('metalness' in newMat) (newMat as any).metalness = metalness;
+						if ('roughness' in newMat) (newMat as any).roughness = roughness;
+						mesh.material = newMat;
+					}
 				}
 			});
 			initMixer(ref);

@@ -5,38 +5,30 @@ Future AI sessions must check this file to understand the latest state of the pr
 
 ---
 
-## [Multiplayer Integration] - 2026-02-05
+## [Randomized Character Materials] - 2026-02-07
 
-### Status
+### Type: Feature / Enhancement
 
-- **Integrated**: PartyKit (Server & Client)
-- **Features**:
-  - `src/party/server.ts`: Lightweight WebSocket server broadcasts updates.
-  - **Deployment**: Server deployed to `antigravity-server.vdud.partykit.dev`.
-  - **Voice Chat**:
-    - P2P WebRTC Mesh network.
-    - Spatial Audio using `<T.PositionalAudio>` (volume drops with distance).
+- **Goal**: Randomize the color, metalness, and roughness of the "Anon" character for each player and sync it across the network.
+- **Components Changed**:
   - `src/lib/network/network.svelte.ts`:
-    - Forced reactivity using `new Map()` re-assignment to ensure Svelte 5 UI updates.
-    - Updated connection logic to support local IP (`window.location.hostname`) for mobile testing.
-  - `Player.svelte`:
-    - Added random spawn offset (+/- 2m) to prevent player stacking.
-    - Throttled network updates to 50ms (20 ticks/s).
-  - `Scene.svelte`: Renders `NetworkPlayer` for each entry in `otherPlayers`.
-  - `NetworkPlayer.svelte`:
-    - rewritten to use `props.state` access inside `useTask` closure to fix stale closure issues.
-    - Implemented basic Linear Interpolation (Lerp) for smooth movement.
-
-### Verification
-
-- **Test**: Desktop + Mobile connected to same LAN IP.
-- **Result**: Confirmed real-time movement sync between devices.
+    - Updated `PlayerState` to include `color`, `metalness`, and `roughness`.
+  - `src/lib/components/Player/Player.svelte`:
+    - Generates random values for visual properties on mount (`#hex`, `0-1`, `0-1`).
+    - Broadcasts these values in the `network.sendUpdate` payload.
+    - Passes these values to the local `<Character />`.
+  - `src/lib/components/Player/Character.svelte`:
+    - Added `color`, `metalness`, `roughness` to props (with defaults).
+    - **Material Cloning**: In `oncreate`, now clones the mesh material to ensure unique instances.
+    - Applies the passed props to the cloned material.
+  - `src/lib/components/NetworkPlayer.svelte`:
+    - Passes the synced `color`, `metalness`, and `roughness` from `props.state` to the remote `<Character />`.
+- **Result**:
+  - Every player spawns with a unique look.
+  - The look reflects accurately for other players over the network.
 
 ---
 
-## [Initial Session] - 2026-02-05
+## [Advanced Shadow System] - 2026-02-07
 
-### Status
-
-- **NO CODE CHANGES MADE.**
-- **Action**: Performed codebase audit and generated documentation.
+...

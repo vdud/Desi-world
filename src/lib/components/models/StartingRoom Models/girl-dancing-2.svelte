@@ -41,7 +41,7 @@ Title: EVE Nikke Suit
 	{:then gltf}
 		<T.Group
 			name="Sketchfab_Scene"
-			scale={1.3}
+			scale={1.2}
 			position={[-2.4, 0, -8]}
 			rotation={[0, Math.PI / 4, 0]}
 		>

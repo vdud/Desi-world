@@ -13,24 +13,6 @@
 
 	const { movement } = $props();
 
-	// Initialize Voice (requests mic)
-	$effect(() => {
-		network.setupVoice();
-
-		const resumeAudio = () => {
-			audioListener.update((listener) => {
-				if (listener && listener.context.state === 'suspended') {
-					listener.context.resume().then(() => console.log('🔊 Audio System Resumed'));
-				}
-				return listener;
-			});
-			window.removeEventListener('click', resumeAudio);
-			window.removeEventListener('keydown', resumeAudio);
-		};
-		window.addEventListener('click', resumeAudio);
-		window.addEventListener('keydown', resumeAudio);
-	});
-
 	const { world } = useRapier();
 	const { renderer } = useThrelte();
 	if (!renderer) throw new Error();
@@ -55,6 +37,11 @@
 	let wasGrounded = $state(false);
 	let lastSendTime = 0;
 	let audioContextSuspended = $state(false);
+
+	// Random Visuals
+	const randomColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+	const randomMetalness = Math.random();
+	const randomRoughness = Math.random();
 
 	// Respawn function
 	function respawn() {
@@ -120,8 +107,8 @@
 			}
 		}
 
-		// Movement logic
-		temp.set(0, 0, movement.forward - movement.backward);
+		// Movement logic - Inverted X axis to account for 180-degree capsule rotation
+		temp.set(movement.left - movement.right, 0, movement.forward - movement.backward);
 		temp.applyEuler(new Euler().copy(capsule.rotation)).multiplyScalar(speed);
 
 		const linVel = rigidBody.linvel();
@@ -150,7 +137,10 @@
 				rotation: capsule.rotation.y, // Assuming Y rotation on capsule
 				movement,
 				grounded,
-				character: 'male'
+				character: 'anon',
+				color: randomColor,
+				metalness: randomMetalness,
+				roughness: randomRoughness
 			});
 			lastSendTime = now;
 		}
@@ -166,7 +156,6 @@
 					if (listener.context.state === 'suspended') {
 						audioContextSuspended = true;
 						listener.context.resume().then(() => {
-							console.log('🔊 Audio System Resumed');
 							audioContextSuspended = false;
 						});
 					} else {
@@ -216,5 +205,12 @@
 			<Collider shape={'capsule'} args={[0.55, 0.3]} />
 		</CollisionGroups>
 	</RigidBody>
-	<Character {movement} {grounded} character="female" />
+	<Character
+		{movement}
+		{grounded}
+		character="anon"
+		color={randomColor}
+		metalness={randomMetalness}
+		roughness={randomRoughness}
+	/>
 </T.Group>

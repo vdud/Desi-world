@@ -10,13 +10,18 @@ export type PlayerState = {
 };
 
 export default class Server implements Party.Server {
+	startTime = Date.now();
+
 	constructor(readonly room: Party.Room) {}
 
 	onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
-		console.log(`Connected:
-  id: ${conn.id}
-  room: ${this.room.id}
-  url: ${new URL(ctx.request.url).pathname}`);
+		// Send music sync time (elapsed since server start)
+		conn.send(
+			JSON.stringify({
+				type: 'sync-music',
+				elapsed: Date.now() - this.startTime
+			})
+		);
 
 		// Notify others that a new player joined
 		this.room.broadcast(
@@ -54,6 +59,15 @@ export default class Server implements Party.Server {
 					})
 				);
 			}
+		} else if (data.type === 'voice-ready') {
+			// Broadcast that this user is ready to renegotiate
+			this.room.broadcast(
+				JSON.stringify({
+					type: 'voice-ready',
+					id: sender.id
+				}),
+				[sender.id]
+			);
 		}
 	}
 

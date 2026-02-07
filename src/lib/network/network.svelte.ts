@@ -6,15 +6,19 @@ export type PlayerState = {
 	y: number;
 	z: number;
 	rotation: number; // Y rotation
-	movement: { forward: number; backward: number; up: number };
+	movement: { forward: number; backward: number; left: number; right: number; up: number };
 	grounded: boolean;
-	character: 'male' | 'female';
+	character: string;
+	color: string;
+	metalness: number;
+	roughness: number;
 };
 
 export class NetworkManager {
 	socket: PartySocket;
 	otherPlayers = $state(new Map<string, PlayerState>());
 	voiceStreams = $state(new Map<string, MediaStream>());
+	serverStartTime = $state(0);
 
 	myId = $state<string>('');
 	myStream: MediaStream | null = null;
@@ -25,18 +29,16 @@ export class NetworkManager {
 		const isDev = import.meta.env.DEV;
 
 		if (typeof window !== 'undefined') {
-			console.log(
-				'Initializing NetworkManager connecting to:',
-				isDev ? window.location.host : 'antigravity-server.vdud.partykit.dev'
-			);
+			const host = isDev ? window.location.host : 'antigravity-server.vdud.partykit.dev';
+
 			this.socket = new PartySocket({
-				host: isDev ? window.location.host : 'antigravity-server.vdud.partykit.dev',
+				host,
 				room: 'main-room',
 				protocol: window.location.protocol === 'https:' ? 'wss' : 'ws'
 			});
 
 			this.socket.addEventListener('open', () => {
-				console.log('✅ PartySocket Connected!');
+				// Connected
 			});
 
 			this.socket.addEventListener('close', (evt) => {
@@ -57,7 +59,6 @@ export class NetworkManager {
 		if (typeof window === 'undefined') return;
 		try {
 			this.myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-			console.log('🎤 Microphone access granted');
 			this.evaluateRenegotiation();
 
 			// If we already have peers (late join), add the track to them?
@@ -69,7 +70,10 @@ export class NetworkManager {
 	}
 
 	handleMessage(msg: any) {
-		if (msg.type === 'player-update') {
+		if (msg.type === 'sync-music') {
+			// Calculate local timestamp of when server started
+			this.serverStartTime = Date.now() - msg.elapsed;
+		} else if (msg.type === 'player-update') {
 			if (msg.id === this.socket.id) return;
 
 			const current = this.otherPlayers.get(msg.id) || { ...msg.data, id: msg.id };
@@ -77,7 +81,6 @@ export class NetworkManager {
 			// FORCE REACTIVITY
 			this.otherPlayers = new Map(this.otherPlayers);
 		} else if (msg.type === 'player-join') {
-			console.log('Player joined:', msg.id);
 			// Initiative voice connection to the new player
 			this.createPeer(msg.id, true);
 		} else if (msg.type === 'player-leave') {
@@ -96,8 +99,6 @@ export class NetworkManager {
 		} else if (msg.type === 'voice-signal') {
 			this.handleSignal(msg.senderId, msg.signal);
 		} else if (msg.type === 'voice-ready') {
-			console.log(`🎤 User ${msg.id} is voice-ready. Resetting connection...`);
-
 			// Always clean up existing connection to ensure fresh start
 			if (this.peers.has(msg.id)) {
 				this.peers.get(msg.id)?.close();
@@ -107,10 +108,9 @@ export class NetworkManager {
 			// Deterministic Initiation: Only one side initiates the rebuild (The one with larger ID)
 			// The other side waits for the Offer.
 			if (this.socket.id > msg.id) {
-				console.log(`Initiating renegotiation with ${msg.id}`);
 				this.createPeer(msg.id, true);
 			} else {
-				console.log(`Waiting for renegotiation offer from ${msg.id}`);
+				// Waiting for renegotiation offer
 			}
 		}
 	}
@@ -138,7 +138,6 @@ export class NetworkManager {
 		// If we are submissive ID, we wait for their offer (triggered by our voice-ready)
 		for (const [id] of this.otherPlayers) {
 			if (this.socket.id > id) {
-				console.log(`Renegotiating with ${id} (I am dominant)`);
 				if (this.peers.has(id)) {
 					this.peers.get(id)?.close();
 					this.peers.delete(id);
@@ -153,15 +152,13 @@ export class NetworkManager {
 		if (this.peers.has(targetId)) return;
 		// if (!this.myStream) return; // Allow Receive-Only if mic not ready yet
 
-		console.log(`Creating PeerConnection for ${targetId} (Initiator: ${initiator})`);
-
 		const pc = new RTCPeerConnection({
 			iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
 		});
 
 		// Monitor connection state
 		pc.onconnectionstatechange = () => {
-			console.log(`Connection state with ${targetId}: ${pc.connectionState}`);
+			// Connection state changed
 		};
 
 		// Add my mic track if available
@@ -171,7 +168,6 @@ export class NetworkManager {
 
 		// Handle incoming tracks
 		pc.ontrack = (event) => {
-			console.log(`🔊 Received audio stream from ${targetId}`);
 			this.voiceStreams.set(targetId, event.streams[0]);
 			this.voiceStreams = new Map(this.voiceStreams);
 		};
@@ -197,30 +193,53 @@ export class NetworkManager {
 	async handleSignal(senderId: string, signal: any) {
 		// If we receive a signal from someone we don't have a peer for, create it (as non-initiator)
 		if (!this.peers.has(senderId)) {
+			// If we get an answer but don't have a peer, it's a zombie signal (ignore it)
+			if (signal.sdp && signal.sdp.type === 'answer') {
+				console.warn(`Ignoring zombie answer from ${senderId}`);
+				return;
+			}
 			this.createPeer(senderId, false);
 		}
 
 		const pc = this.peers.get(senderId)!;
 
-		if (signal.sdp) {
-			await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+		try {
+			if (signal.sdp) {
+				// Prevent loop: If we are 'stable' and receive an 'answer', it's redundant/error
+				if (pc.signalingState === 'stable' && signal.sdp.type === 'answer') {
+					console.warn(`Ignoring answer from ${senderId} because signalingState is stable.`);
+					return;
+				}
 
-			// Ensure we attach our mic tracks if we have them but haven't added them to this PC yet
-			if (this.myStream) {
-				const senders = pc.getSenders();
-				if (senders.length === 0) {
-					console.log(`🎤 Adding missing tracks to existing peer ${senderId}`);
-					this.myStream.getTracks().forEach((track) => pc.addTrack(track, this.myStream!));
+				// If we receive an 'offer' but we are not 'stable', we might be in a glare (collision).
+				// Simple conflict resolution: if we are trying to offer too, but they have higher ID, let them win?
+				// For now, let's just proceed and let WebRTC roll-back if needed.
+
+				await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+
+				// Ensure we attach our mic tracks if we have them but haven't added them to this PC yet
+				if (this.myStream) {
+					const senders = pc.getSenders();
+					if (senders.length === 0) {
+						this.myStream.getTracks().forEach((track) => pc.addTrack(track, this.myStream!));
+					}
+				}
+
+				if (signal.sdp.type === 'offer') {
+					const answer = await pc.createAnswer();
+					await pc.setLocalDescription(answer);
+					this.sendSignal(senderId, { sdp: answer });
+				}
+			} else if (signal.ice) {
+				// ICE candidate buffering: Only add if remote description is set
+				if (pc.remoteDescription) {
+					await pc.addIceCandidate(new RTCIceCandidate(signal.ice));
+				} else {
+					console.warn(`Buffer/Drop ICE from ${senderId} because remoteDescription is null`);
 				}
 			}
-
-			if (signal.sdp.type === 'offer') {
-				const answer = await pc.createAnswer();
-				await pc.setLocalDescription(answer);
-				this.sendSignal(senderId, { sdp: answer });
-			}
-		} else if (signal.ice) {
-			await pc.addIceCandidate(new RTCIceCandidate(signal.ice));
+		} catch (e) {
+			console.error(`Error handling signal from ${senderId}:`, e);
 		}
 	}
 

@@ -41,7 +41,7 @@ Title: Belly Dance
 	{:then gltf}
 		<T.Group
 			name="Sketchfab_Scene"
-			scale={1.5}
+			scale={1.2}
 			position={[2, 0, -7]}
 			rotation={[0, -Math.PI / 4, 0]}
 		>

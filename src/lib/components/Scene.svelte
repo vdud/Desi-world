@@ -34,20 +34,9 @@
 			loader: () => import('./models/StartingRoom Models/car-1.svelte')
 		},
 		{
-			id: 'carpet',
-			position: [2, 0, -13],
-			loader: () => import('./models/StartingRoom Models/carpet.svelte')
-		},
-		{
-			id: 'ottoman-pillow-and-carpets',
-			position: [0, 0, -7],
-
-			loader: () => import('./models/StartingRoom Models/ottoman_pillow_and_carpets_v2.svelte')
-		},
-		{
-			id: 'technival-speakers-wall',
+			id: 'low-poly-ground-speaker',
 			position: [-10, 0, -5],
-			loader: () => import('./models/StartingRoom Models/technival_speakers_wall.svelte')
+			loader: () => import('./models/StartingRoom Models/low-poly-speakers.svelte')
 		}
 	];
 

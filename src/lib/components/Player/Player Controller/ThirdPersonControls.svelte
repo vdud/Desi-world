@@ -39,8 +39,6 @@
 	// Initialize camera immediately when object becomes available
 	$effect(() => {
 		if (object && camera.current && !isInitialized) {
-			console.log('Initializing camera on object:', object.position);
-
 			// Hard snap to initial position immediately
 			const offset = idealOffset.clone().applyQuaternion(object.quaternion).add(object.position);
 			const look = object.position.clone().add(new Vector3(0, 1, 0));
