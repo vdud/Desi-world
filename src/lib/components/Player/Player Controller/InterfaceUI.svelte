@@ -268,7 +268,7 @@
 		position: fixed;
 		top: max(env(safe-area-inset-top), 20px);
 		left: max(env(safe-area-inset-left), 20px);
-		z-index: 10001;
+		z-index: 101;
 	}
 
 	:global(html, body) {
@@ -282,7 +282,7 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		z-index: 10000;
+		z-index: 100;
 		touch-action: none;
 		user-select: none;
 		-webkit-user-select: none;
@@ -306,7 +306,7 @@
 		transition:
 			background 0.2s,
 			transform 0.1s;
-		z-index: 10001;
+		z-index: 101;
 	}
 
 	.icon-btn:active {

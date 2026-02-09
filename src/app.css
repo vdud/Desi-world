@@ -63,3 +63,12 @@ p {
 	background: var(--accent-hover);
 	transform: translateY(-2px);
 }
+
+/* Force Reown/WalletConnect Modal on top */
+:global(w3m-modal) {
+	z-index: 2147483647 !important;
+}
+
+:global(.w3m-overlay) {
+	z-index: 2147483646 !important;
+}
