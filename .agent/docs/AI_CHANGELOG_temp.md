@@ -1,6 +1,6 @@
 # AI Changelog
 
-This file tracks all modifications made by AI collaborators to the Antigravity codebase.
+This file tracks all modifications made by AI collaborators to the Metavervrse codebase.
 Future AI sessions must check this file to understand the latest state of the project.
 
 ---

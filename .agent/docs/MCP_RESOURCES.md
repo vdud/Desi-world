@@ -1,6 +1,6 @@
 # MCP Resources & Tooling Strategy
 
-This document outlines the **Model Context Protocol (MCP)** tools, servers, and skills identified to enhance the development of Antigravity. These resources are selected to specifically support the **SvelteKit 5**, **Threlte 8**, and **Three.js** technology stack.
+This document outlines the **Model Context Protocol (MCP)** tools, servers, and skills identified to enhance the development of root0. These resources are selected to specifically support the **SvelteKit 5**, **Threlte 8**, and **Three.js** technology stack.
 
 ---
 
@@ -56,12 +56,12 @@ Tools to help the AI "ground" itself in documentation that is newer than its tra
 
 ## 3. Toolkits & SDKs
 
-Libraries for building _custom_ tools specific to the Antigravity engine.
+Libraries for building _custom_ tools specific to the root0 engine.
 
 ### **TypeScript MCP SDK**
 
 - **Description**: The official SDK for building MCP servers in TypeScript.
-- **Relevance**: Used to build a custom "Desi-world Debug Server".
+- **Relevance**: Used to build a custom "root0 Debug Server".
 - **Potential Custom Tools**:
   - `listAssets()`: Return strict list of available GLB models.
   - `teleportPlayer(x, y, z)`: Modify the running dev server state (via HMR or websocket).
@@ -81,7 +81,7 @@ Libraries for building _custom_ tools specific to the Antigravity engine.
 
 ---
 
-## 5. Recommended "Skills" for Antigravity
+## 5. Recommended "Skills" for root0
 
 To maximize productivity, the following "Skills" (prompt contexts + tool configs) should be defined for the AI:
 

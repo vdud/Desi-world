@@ -2,6 +2,7 @@
 <script lang="ts">
 	import { type Vector2 } from 'three';
 	import { onMount } from 'svelte';
+	import ConnectWallet from '$lib/components/ui/ConnectWallet.svelte';
 
 	interface MovementState {
 		forward: number;
@@ -202,11 +203,16 @@
 	onpointerup={handlePointerEnd}
 	onpointercancel={handlePointerEnd}
 >
+	<!-- Connect Wallet (Top Left) -->
+	<div class="wallet-container" onpointerdown={(e) => e.stopPropagation()}>
+		<ConnectWallet />
+	</div>
+
 	<!-- Fullscreen Toggle Button -->
 	<button
 		class="icon-btn fullscreen-btn"
 		onclick={toggleFullscreen}
-		touch-action="manipulation"
+		style="touch-action: manipulation;"
 		aria-label="Toggle Fullscreen"
 	>
 		{#if isFullscreen}
@@ -258,6 +264,13 @@
 </div>
 
 <style>
+	.wallet-container {
+		position: fixed;
+		top: max(env(safe-area-inset-top), 20px);
+		left: max(env(safe-area-inset-left), 20px);
+		z-index: 10001;
+	}
+
 	:global(html, body) {
 		height: 100dvh;
 		overflow: hidden;

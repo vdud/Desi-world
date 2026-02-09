@@ -5,7 +5,7 @@ description: Guidelines for 3D development using Threlte 8, Three.js, and Rapier
 
 # Threlte Game Dev Guidelines
 
-This skill defines how to build 3D features in Antigravity.
+This skill defines how to build 3D features in root0.
 Ref: https://threlte.xyz/docs/reference/v8-migration
 
 ## 1. Component vs. Imperative

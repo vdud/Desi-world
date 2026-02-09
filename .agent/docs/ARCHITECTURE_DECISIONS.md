@@ -1,6 +1,6 @@
 # Architecture Decisions
 
-This document records the significant architectural choices made in the Antigravity project. It serves as a guide for understanding _why_ the code works the way it does.
+This document records the significant architectural choices made in the root0 project. It serves as a guide for understanding _why_ the code works the way it does.
 
 ## 1. Hybrid Reactivity: Runes (`$state`) + Stores (`writable`)
 

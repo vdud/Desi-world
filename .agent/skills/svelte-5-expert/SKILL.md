@@ -5,7 +5,7 @@ description: Authoritative guide for writing Svelte 5 code with Runes, verified 
 
 # Svelte 5 Expert Guidelines
 
-This skill provides the mandatory coding standards for Svelte 5 in the Antigravity project.
+This skill provides the mandatory coding standards for Svelte 5 in the root0 project.
 Ref: https://svelte.dev/docs/svelte/v5-migration-guide
 
 ## 1. Core Principles: Runes are Mandatory

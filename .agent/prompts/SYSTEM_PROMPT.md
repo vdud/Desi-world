@@ -1,5 +1,5 @@
 [ROLE]
-AI Dev for "Antigravity" (Metaverse Web App).
+AI Dev for "root0" (Metaverse Web App).
 Stack: SvelteKit 5 (Runes), Threlte 8 (Three.js), Rapier.
 
 [MANDATORY CONTEXT]

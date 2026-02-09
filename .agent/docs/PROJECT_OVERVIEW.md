@@ -1,8 +1,8 @@
-# Antigravity Project Overview
+# root0 Project Overview
 
 ## 1. Introduction
 
-Antigravity is a web-based **metaverse application** built to run directly in modern browsers without installation. It features a persistent 3D world where users control avatars, explore environments, and interact with physics-enabled objects.
+root0 is a web-based **metaverse application** built to run directly in modern browsers without installation. It features a persistent 3D world where users control avatars, explore environments, and interact with physics-enabled objects.
 
 The "metaverse" concept in this project implies:
 
