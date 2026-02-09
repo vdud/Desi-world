@@ -35,15 +35,12 @@
 
 	h1 {
 		font-size: 3rem;
-		background: linear-gradient(to right, #fff, #999);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.lead {
 		font-size: 1.5rem;
-		color: #888;
+		color: var(--text-secondary);
 		margin-bottom: 4rem;
 	}
 
@@ -52,22 +49,22 @@
 	}
 
 	h3 {
-		color: white;
+		color: var(--text-primary);
 		margin-bottom: 0.5rem;
 		font-size: 1.5rem;
 	}
 
 	p {
-		color: #aaa;
+		color: var(--text-secondary);
 		line-height: 1.6;
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

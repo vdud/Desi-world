@@ -34,15 +34,16 @@
 
 	h1 {
 		font-size: 4rem;
-		background: linear-gradient(to right, #646cff, #a0a0ff);
+		background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
 		background-clip: text;
 		-webkit-background-clip: text;
 		-webkit-text-fill-color: transparent;
+		color: var(--text-primary); /* Fallback */
 	}
 
 	.lead {
 		font-size: 1.5rem;
-		color: #aaa;
+		color: var(--text-secondary);
 		margin-bottom: 4rem;
 	}
 
@@ -55,34 +56,34 @@
 
 	.feature-card {
 		padding: 2rem;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(125, 125, 125, 0.03);
+		border: 1px solid var(--border-color);
 		border-radius: 16px;
 		transition: transform 0.3s;
 	}
 
 	.feature-card:hover {
 		transform: translateY(-5px);
-		background: rgba(255, 255, 255, 0.06);
+		background: rgba(125, 125, 125, 0.06);
 	}
 
 	h3 {
 		font-size: 1.5rem;
-		color: white;
+		color: var(--text-primary);
 		margin-bottom: 1rem;
 	}
 
 	p {
-		color: #aaa;
+		color: var(--text-secondary);
 		line-height: 1.6;
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

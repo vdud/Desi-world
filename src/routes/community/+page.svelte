@@ -31,15 +31,12 @@
 
 	h1 {
 		font-size: 3rem;
-		background: linear-gradient(to right, #fff, #999);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.lead {
 		font-size: 1.5rem;
-		color: #888;
+		color: var(--text-secondary);
 		margin-bottom: 4rem;
 	}
 
@@ -52,10 +49,10 @@
 
 	.community-card {
 		padding: 2rem;
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(125, 125, 125, 0.05);
 		border-radius: 12px;
 		text-decoration: none;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--border-color);
 		transition:
 			transform 0.2s,
 			background 0.2s;
@@ -63,25 +60,25 @@
 
 	.community-card:hover {
 		transform: translateY(-2px);
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(125, 125, 125, 0.1);
 	}
 
 	h3 {
-		color: white;
+		color: var(--text-primary);
 		margin-bottom: 0.5rem;
 	}
 
 	p {
-		color: #aaa;
+		color: var(--text-secondary);
 		margin: 0;
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

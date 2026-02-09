@@ -29,40 +29,37 @@
 	h1 {
 		font-size: 3rem;
 		font-weight: 800;
-		background: linear-gradient(to right, #fff, #999);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.updated {
-		color: #666;
+		color: var(--text-secondary);
 		margin-bottom: 3rem;
 	}
 
 	.skeleton-block {
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(125, 125, 125, 0.05);
 		padding: 2rem;
 		border-radius: 12px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--border-color);
 		margin-bottom: 3rem;
 	}
 
 	h2 {
-		color: #e0e0e0;
+		color: var(--text-primary);
 		margin-top: 2rem;
 	}
 
 	p {
-		color: #aaa;
+		color: var(--text-secondary);
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

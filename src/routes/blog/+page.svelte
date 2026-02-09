@@ -27,78 +27,89 @@
 
 <style>
 	.page-content {
-		padding-top: 4rem;
+		padding-top: 6rem;
 		max-width: 800px;
+		margin: 0 auto;
+		padding-left: 2rem;
+		padding-right: 2rem;
 	}
 
 	h1 {
-		font-size: 3rem;
+		font-size: clamp(2rem, 5vw, 3rem);
 		margin-bottom: 0.5rem;
-		background: linear-gradient(to right, #fff, #888);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.lead {
-		font-size: 1.5rem;
-		color: #888;
-		margin-bottom: 3rem;
+		font-size: 1.25rem;
+		color: var(--text-secondary);
+		margin-bottom: 4rem;
 	}
 
 	.posts-grid {
 		display: grid;
 		gap: 2rem;
-		margin-bottom: 3rem;
+		margin-bottom: 4rem;
 	}
 
 	.post-card {
 		display: block;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: transparent;
+		border: 1px solid var(--border-color);
 		padding: 2rem;
-		border-radius: 12px;
+		border-radius: 4px; /* Minimal/Brutalist */
 		color: inherit;
 		text-decoration: none;
 		transition:
-			transform 0.2s,
-			background 0.2s;
+			transform 0.4s var(--ease-out-expo),
+			background 0.4s var(--ease-out-expo),
+			border-color 0.4s;
 	}
 
 	.post-card:hover {
-		background: rgba(255, 255, 255, 0.06);
-		transform: translateY(-2px);
+		background: rgba(128, 128, 128, 0.05);
+		transform: translateY(-4px);
+		border-color: var(--text-secondary);
 	}
 
 	.post-card h2 {
 		margin-top: 0;
 		font-size: 1.5rem;
-		color: white;
+		color: var(--text-primary);
+		margin-bottom: 0.5rem;
 	}
 
 	.date {
 		font-size: 0.85rem;
-		color: #666;
+		color: var(--text-secondary);
 		margin-bottom: 1rem;
+		opacity: 0.8;
+		font-family: monospace;
 	}
 
 	.desc {
-		color: #aaa;
+		color: var(--text-secondary);
 		margin-bottom: 1.5rem;
+		line-height: 1.6;
 	}
 
 	.read-more {
-		color: var(--accent-color);
+		color: var(--text-primary);
 		font-size: 0.9rem;
-		font-weight: 600;
+		font-weight: 500;
+		text-decoration: underline;
+		text-underline-offset: 4px;
+		opacity: 0.8;
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
+		display: inline-block;
+		margin-bottom: 2rem;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

@@ -43,10 +43,7 @@
 	h1 {
 		font-size: 3rem;
 		margin-bottom: 3rem;
-		background: linear-gradient(to right, #fff, #999);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.faq-grid {
@@ -56,28 +53,28 @@
 	}
 
 	.faq-card {
-		background: rgba(255, 255, 255, 0.05);
+		background: rgba(125, 125, 125, 0.05);
 		padding: 1.5rem;
 		border-radius: 12px;
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		border: 1px solid var(--border-color);
 	}
 
 	h3 {
-		color: white;
+		color: var(--text-primary);
 		margin-bottom: 0.5rem;
 	}
 
 	p {
-		color: #aaa;
+		color: var(--text-secondary);
 		margin: 0;
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

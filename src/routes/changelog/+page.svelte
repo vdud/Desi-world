@@ -34,20 +34,17 @@
 
 	h1 {
 		font-size: 3rem;
-		background: linear-gradient(to right, #fff, #999);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.lead {
 		font-size: 1.5rem;
-		color: #888;
+		color: var(--text-secondary);
 		margin-bottom: 4rem;
 	}
 
 	.timeline {
-		border-left: 2px solid rgba(255, 255, 255, 0.1);
+		border-left: 2px solid var(--border-color);
 		padding-left: 2rem;
 		margin-bottom: 3rem;
 	}
@@ -66,7 +63,7 @@
 		height: 0.8rem;
 		background: var(--accent-color);
 		border-radius: 50%;
-		border: 4px solid #000;
+		border: 4px solid var(--bg-primary);
 	}
 
 	.date {
@@ -79,22 +76,22 @@
 	}
 
 	h3 {
-		color: white;
+		color: var(--text-primary);
 		font-size: 1.5rem;
 		margin-bottom: 0.5rem;
 	}
 
 	p {
-		color: #aaa;
+		color: var(--text-secondary);
 		line-height: 1.6;
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

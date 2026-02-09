@@ -32,6 +32,7 @@
 	let gainNode: GainNode;
 	let isAudioStarted = $state(false);
 	let currentGain = $state(0);
+	let frameCount = 0;
 
 	import { network } from '$lib/network/network.svelte';
 
@@ -89,8 +90,9 @@
 
 	// Simple linear falloff - runs every frame
 	useTask(() => {
-		if (!isAudioStarted || !gainNode) return;
+		if (!audio || !isAudioStarted || !gainNode) return;
 
+		// 1. Distance-based Volume
 		const pos = $playerPosition;
 		const distance = pos.distanceTo(SPEAKER_POS);
 
@@ -109,6 +111,41 @@
 		if (Math.abs(newGain - gainNode.gain.value) > 0.001) {
 			gainNode.gain.value = newGain;
 			currentGain = newGain;
+		}
+
+		// 2. Network Synchronization
+		// Only sync if we have a valid server time and audio has duration
+		// Optimization: Check only every ~60 frames (1 second) to save CPU
+		if (
+			frameCount++ % 60 === 0 &&
+			network.serverStartTime > 0 &&
+			audio.duration > 0 &&
+			!audio.paused
+		) {
+			const elapsed = (Date.now() - network.serverStartTime) / 1000;
+			// Modulo for looping track
+			const expectedTime = elapsed % audio.duration;
+
+			const drift = Math.abs(audio.currentTime - expectedTime);
+
+			// Handle wrap-around drift (e.g. song is at 0.1s, local is at 59.9s)
+			const halfDuration = audio.duration / 2;
+			let wrappedDrift = drift;
+			if (drift > halfDuration) {
+				wrappedDrift = audio.duration - drift;
+			}
+
+			// Tolerance: 0.3s. If drift > 0.3s, snap to correct time.
+			if (wrappedDrift > 0.3) {
+				// Avoid "snap loops" if near the very end/start boundary
+				// But mostly just force it
+				console.log('🔄 Syncing audio drift:', {
+					local: audio.currentTime,
+					server: expectedTime,
+					drift: wrappedDrift
+				});
+				audio.currentTime = expectedTime;
+			}
 		}
 	});
 

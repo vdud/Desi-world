@@ -28,63 +28,74 @@
 
 <style>
 	.page-content {
-		padding-top: 4rem;
+		padding-top: 6rem;
 		max-width: 800px;
+		margin: 0 auto;
+		padding-left: 2rem;
+		padding-right: 2rem;
 	}
 
 	header {
 		margin-bottom: 2rem;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		border-bottom: 1px solid var(--border-color);
 		padding-bottom: 2rem;
 	}
 
 	h1 {
-		font-size: 3rem;
+		font-size: clamp(2.5rem, 5vw, 4rem);
 		line-height: 1.1;
 		margin-bottom: 0.5rem;
-		background: linear-gradient(to right, #fff, #aaa);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.meta {
-		color: #666;
+		color: var(--text-secondary);
 		font-size: 0.9rem;
+		font-family: monospace;
+		opacity: 0.8;
 	}
 
 	/* Simple Markdown Styling */
 	:global(.markdown-body h2) {
-		margin-top: 2rem;
+		margin-top: 3rem;
 		margin-bottom: 1rem;
 		font-size: 1.8rem;
-		color: #ddd;
+		color: var(--text-primary);
+		letter-spacing: -0.02em;
 	}
 
 	:global(.markdown-body p) {
 		margin-bottom: 1.5rem;
 		line-height: 1.7;
-		color: #ccc;
+		color: var(--text-primary);
+		opacity: 0.9;
+		font-size: 1.1rem;
 	}
 
 	:global(.markdown-body ul) {
 		margin-bottom: 1.5rem;
 		padding-left: 1.5rem;
-		color: #ccc;
+		color: var(--text-secondary);
 	}
 
 	:global(.markdown-body li) {
 		margin-bottom: 0.5rem;
 	}
 
+	:global(.markdown-body strong) {
+		font-weight: 600;
+		color: var(--text-primary);
+	}
+
 	.back-link {
 		display: inline-block;
-		margin-top: 3rem;
-		color: #666;
+		margin-top: 4rem;
+		margin-bottom: 3rem;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>

@@ -1,198 +1,282 @@
 <script lang="ts">
-	import ConnectWallet from '$lib/components/ui/ConnectWallet.svelte';
+	import { fly } from 'svelte/transition';
+	import { onMount } from 'svelte';
+
 	let { data } = $props();
+	let visible = $state(false);
+
+	onMount(() => {
+		visible = true;
+	});
 </script>
 
 <svelte:head>
-	<title>root0 | The Metaverse is Here</title>
-	<meta name="description" content="Join the next generation of web-based metaverse experiences." />
+	<title>root0 | The Sanctuary</title>
+	<meta
+		name="description"
+		content="A persistent digital space. No installation. Pure connection."
+	/>
 </svelte:head>
 
-<header class="navbar">
-	<div class="logo">M</div>
-	<div class="actions">
-		<ConnectWallet />
-	</div>
-</header>
+<main class="landing">
+	<!-- Hero Section -->
+	<section class="hero">
+		<div class="hero-content">
+			{#if visible}
+				<h1 in:fly={{ y: 50, duration: 1500, easing: (t) => 1 - Math.pow(1 - t, 4) }}>
+					<span class="line">Define your</span>
+					<span class="line serif">Digital Soul.</span>
+				</h1>
 
-<main class="hero">
-	<div class="content">
-		<h1 class="glitch-text" data-text="root0">root0</h1>
-		<p class="subtitle">Experience the future of the web. No install required.</p>
+				<div
+					class="meta"
+					in:fly={{ y: 30, duration: 1500, delay: 400, easing: (t) => 1 - Math.pow(1 - t, 4) }}
+				>
+					<p class="description">
+						A persistent, high-fidelity world that lives in your browser. No downloads. No walls.
+						Just you and the void.
+					</p>
 
-		<div class="cta-container">
-			<a href="/play" class="play-btn">
-				Enter World
-				<span class="arrow">→</span>
-			</a>
+					<div class="cta-wrapper">
+						<!-- Disable preload to prevent body style changes on hover -->
+						<a
+							href="/play"
+							class="enter-btn"
+							data-sveltekit-preload-data="off"
+							data-sveltekit-preload-code="off"
+						>
+							<span class="btn-text">Initialise Sequence</span>
+							<span class="btn-icon">→</span>
+						</a>
+						<span class="latency">Server Status: Online • 12ms</span>
+					</div>
+				</div>
+			{/if}
 		</div>
-	</div>
 
+		<div class="ambient-light" />
+	</section>
+
+	<!-- Footer / Minimal Info -->
 	<footer class="footer">
-		<nav>
+		<nav class="footer-nav">
 			<div class="nav-group">
 				<h3>Product</h3>
-				<a href="/world">The World</a>
-				<a href="/how-it-works">How It Works</a>
-				<a href="/roadmap">Roadmap</a>
-				<a href="/changelog">Changelog</a>
-				<a href="/faq">FAQ</a>
+				<a href="/world" class="footer-link">The World</a>
+				<a href="/how-it-works" class="footer-link">How It Works</a>
+				<a href="/roadmap" class="footer-link">Roadmap</a>
+				<a href="/changelog" class="footer-link">Changelog</a>
+				<a href="/faq" class="footer-link">FAQ</a>
 			</div>
 
 			<div class="nav-group">
 				<h3>Community</h3>
-				<a href="/blog">Blog</a>
-				<a href="/community">Connect</a>
-				<a href="/community-guidelines">Community Guidelines</a>
+				<a href="/blog" class="footer-link">Blog</a>
+				<a href="/community" class="footer-link">Connect</a>
+				<a href="/community-guidelines" class="footer-link">Waitlist</a>
 			</div>
 
 			<div class="nav-group">
 				<h3>Legal</h3>
-				<a href="/about">About</a>
-				<a href="/privacy-policy">Privacy Policy</a>
-				<a href="/terms-of-service">Terms of Service</a>
-				<a href="/cookie-policy">Cookie Policy</a>
+				<a href="/about" class="footer-link">Manifesto</a>
+				<a href="/privacy-policy" class="footer-link">Privacy Policy</a>
+				<a href="/terms-of-service" class="footer-link">Terms of Service</a>
+				<a href="/cookie-policy" class="footer-link">Cookie Policy</a>
 			</div>
 		</nav>
-		<p>&copy; 2026 root0. All rights reserved.</p>
+
+		<div class="footer-grid">
+			<div class="col">
+				<span class="label">Coordinates</span>
+				<span class="value">00.00.00</span>
+			</div>
+			<div class="col">
+				<span class="label">System</span>
+				<span class="value">v1.0.4 (Alpha)</span>
+			</div>
+			<div class="col right">
+				<a href="https://twitter.com" target="_blank" class="footer-link">Twitter</a>
+				<a href="https://discord.com" target="_blank" class="footer-link">Discord</a>
+			</div>
+		</div>
 	</footer>
 </main>
 
 <style>
-	.navbar {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
-		padding: 2rem;
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		z-index: 100;
-		box-sizing: border-box;
-	}
-
-	.logo {
-		font-weight: 900;
-		font-size: 1.5rem;
-		color: white;
-	}
-
-	.hero {
-		height: 100vh;
+	/* Layout */
+	.landing {
+		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-		background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+		justify-content: space-between;
 		position: relative;
-		overflow: hidden;
+		/* Removed overflow: hidden to allow scrolling if content overflows */
 	}
 
-	.content {
-		text-align: center;
-		z-index: 10;
+	/* Hero */
+	.hero {
+		min-height: 80vh; /* Ensure hero takes up most of the screen */
+		display: flex;
+		align-items: center;
+		padding: 6rem 10vw 4rem; /* Added top/bottom padding to prevent overlap with header */
+		position: relative;
+		z-index: 1;
+		overflow: hidden;
+		border-bottom: 1px solid var(--border-color);
+	}
+
+	.hero-content {
+		max-width: 800px;
 	}
 
 	h1 {
-		font-size: 6rem;
-		font-weight: 900;
-		letter-spacing: -0.05em;
-		background: linear-gradient(to right, #ffffff, #a0a0ff);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		margin-bottom: 1rem;
-		animation: float 6s ease-in-out infinite;
+		font-size: clamp(3rem, 8vw, 7rem); /* Responsive typography */
+		line-height: 1.1;
+		margin-bottom: 2rem;
+		display: flex;
+		flex-direction: column;
 	}
 
-	.subtitle {
-		font-size: 1.5rem;
-		color: #888;
-		margin-bottom: 3rem;
+	.line {
+		display: block;
+	}
+
+	.serif {
+		font-family: var(--font-serif);
 		font-weight: 300;
+		opacity: 0.9;
+		font-style: italic;
 	}
 
-	.play-btn {
+	.meta {
+		margin-top: 2rem;
+		padding-left: 5px; /* Alignment adjustment */
+	}
+
+	.description {
+		font-size: 1.1rem;
+		color: var(--text-secondary);
+		max-width: 400px;
+		margin-bottom: 3rem;
+		line-height: 1.7;
+	}
+
+	/* CTA Button */
+	.cta-wrapper {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		align-items: flex-start;
+	}
+
+	.enter-btn {
 		display: inline-flex;
 		align-items: center;
-		gap: 1rem;
-		font-size: 1.5rem;
-		padding: 1rem 3rem;
-		background: rgba(255, 255, 255, 0.1);
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		backdrop-filter: blur(10px);
-		border-radius: 50px;
-		color: white;
-		text-decoration: none;
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-		box-shadow: 0 0 20px rgba(100, 108, 255, 0.2);
+		gap: 1.5rem;
+		padding: 1rem 2rem;
+		background: var(--text-primary);
+		color: var(--bg-primary);
+		border-radius: 2px; /* Brutalist/Minimal */
+		font-weight: 500;
+		transition: transform 0.4s var(--ease-out-expo);
 	}
 
-	.play-btn:hover {
-		background: rgba(255, 255, 255, 0.2);
-		transform: scale(1.05);
-		box-shadow: 0 0 40px rgba(100, 108, 255, 0.4);
+	.enter-btn:hover {
+		transform: translateX(10px);
+		background: var(--accent-hover);
+		color: var(--bg-primary); /* Ensure text remains readable against white/accent background */
 	}
 
-	.arrow {
-		transition: transform 0.3s;
+	.latency {
+		font-size: 0.75rem;
+		color: var(--text-secondary);
+		font-family: monospace;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.play-btn:hover .arrow {
-		transform: translateX(5px);
-	}
-
+	/* Footer */
 	.footer {
-		position: absolute;
-		bottom: 2rem;
+		padding: 4rem 3rem 2rem;
 		width: 100%;
-		text-align: center;
-		color: #444;
-		font-size: 0.9rem;
+		max-width: 1400px; /* Constrain width on large screens */
+		margin: 0 auto;
+		box-sizing: border-box;
 	}
 
-	.footer nav {
+	.footer-nav {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 2rem;
-		max-width: 800px;
-		margin: 0 auto 3rem;
-		text-align: left;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		gap: 3rem;
+		margin-bottom: 4rem;
 	}
 
 	.nav-group {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.75rem;
 	}
 
 	.nav-group h3 {
-		color: white;
-		font-size: 1rem;
-		margin-bottom: 0.5rem;
+		font-size: 0.9rem;
+		color: var(--text-primary);
 		opacity: 0.8;
+		margin-bottom: 0.5rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
 	}
 
-	.footer a {
-		color: #666;
-		text-decoration: none;
-		transition: color 0.2s;
+	.footer-link {
+		color: var(--text-secondary);
+		font-size: 0.95rem;
+		transition: color 0.2s var(--ease-out-expo);
 	}
 
-	.footer a:hover {
-		color: white;
+	.footer-link:hover {
+		color: var(--text-primary);
+		opacity: 1;
 	}
 
-	@keyframes float {
-		0%,
-		100% {
-			transform: translateY(0);
-		}
-		50% {
-			transform: translateY(-10px);
-		}
+	.footer-grid {
+		display: flex;
+		justify-content: space-between;
+		font-size: 0.8rem;
+		color: var(--text-secondary);
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		padding-top: 2rem;
+		border-top: 1px solid var(--border-color);
 	}
 
-	/* Glitch effect could be added here for extra style */
+	.col {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.right {
+		align-items: flex-end;
+	}
+
+	.label {
+		color: var(--text-primary);
+		opacity: 0.6;
+	}
+
+	/* Ambient Background */
+	.ambient-light {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 140vw;
+		height: 140vh;
+		background: radial-gradient(
+			circle at center,
+			rgba(30, 30, 35, 0.3) 0%,
+			rgba(10, 10, 10, 0) 60%
+		);
+		transform: translate(-50%, -50%);
+		z-index: -1;
+		pointer-events: none;
+	}
 </style>

@@ -47,15 +47,12 @@
 
 	h1 {
 		font-size: 3rem;
-		background: linear-gradient(to right, #fff, #999);
-		background-clip: text;
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
+		color: var(--text-primary);
 	}
 
 	.lead {
 		font-size: 1.5rem;
-		color: #888;
+		color: var(--text-secondary);
 		margin-bottom: 4rem;
 	}
 
@@ -68,25 +65,25 @@
 
 	.phase {
 		padding: 2rem;
-		background: rgba(255, 255, 255, 0.03);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(125, 125, 125, 0.03);
+		border: 1px solid var(--border-color);
 		border-radius: 12px;
 	}
 
 	.phase.active {
 		border-color: var(--accent-color);
-		background: rgba(100, 108, 255, 0.05);
+		background: rgba(125, 125, 125, 0.05);
 	}
 
 	h3 {
-		color: white;
+		color: var(--text-primary);
 		margin-bottom: 1.5rem;
 		font-size: 1.3rem;
 	}
 
 	ul {
 		padding-left: 1.2rem;
-		color: #aaa;
+		color: var(--text-secondary);
 	}
 
 	li {
@@ -94,11 +91,11 @@
 	}
 
 	.back-link {
-		color: #666;
+		color: var(--text-secondary);
 		transition: color 0.2s;
 	}
 
 	.back-link:hover {
-		color: white;
+		color: var(--text-primary);
 	}
 </style>
