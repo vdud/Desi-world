@@ -14,33 +14,33 @@
 	const worldObjects = [
 		{
 			id: 'starting-room',
-			position: [0, 0, 0],
+			position: [0, 0, 0] as [number, number, number],
 			loader: () => import('./models/Starting-Room.svelte'),
 			priority: 10
 		},
 		{
 			id: 'girl-dancing-1',
-			position: [5, 0, 5],
+			position: [5, 0, 5] as [number, number, number],
 			loader: () => import('./models/StartingRoom Models/girl-dancing-1.svelte')
 		},
 		{
 			id: 'girl-dancing-2',
-			position: [-2.4, 0, -8],
+			position: [-2.4, 0, -8] as [number, number, number],
 			loader: () => import('./models/StartingRoom Models/girl-dancing-2.svelte')
 		},
 		{
 			id: 'car-1',
-			position: [10, 0, -5],
+			position: [10, 0, -5] as [number, number, number],
 			loader: () => import('./models/StartingRoom Models/car-1.svelte')
 		},
 		{
 			id: 'low-poly-ground-speaker',
-			position: [-10, 0, -5],
+			position: [-10, 0, -5] as [number, number, number],
 			loader: () => import('./models/StartingRoom Models/low-poly-speakers.svelte')
 		}
 	];
 
-	const { movement } = $props();
+	let { movement = $bindable() } = $props();
 </script>
 
 <T.AmbientLight intensity={0.3} />
@@ -54,7 +54,7 @@
 <ProximityLoader objects={worldObjects} loadRadius={25} unloadRadius={60} loadDelay={150} />
 
 {#if $isPlane}
-	<Player {movement} />
+	<Player bind:movement />
 
 	{#each network.otherPlayers.entries() as [id, state] (id)}
 		<NetworkPlayer {state} />

@@ -12,9 +12,17 @@ export type PlayerState = {
 	color: string;
 	metalness: number;
 	roughness: number;
+	isAgent?: boolean;
 };
 
-export class NetworkManager {
+import type {
+	AgentInterface,
+	AgentCommand,
+	AgentObservation,
+	AgentSelfState
+} from './AgentProtocol';
+
+export class NetworkManager implements AgentInterface {
 	socket: PartySocket;
 	otherPlayers = $state(new Map<string, PlayerState>());
 	voiceStreams = $state(new Map<string, MediaStream>());
@@ -23,6 +31,24 @@ export class NetworkManager {
 	myId = $state<string>('');
 	myStream: MediaStream | null = null;
 	peers = new Map<string, RTCPeerConnection>();
+
+	// Agent Mode
+	isAgent = $state(false);
+	agentCommandCallback: ((cmd: AgentCommand) => void) | null = null;
+
+	// Cache for self state
+	myState: AgentSelfState = {
+		id: '',
+		position: { x: 0, y: 0, z: 0 },
+		rotation: 0,
+		velocity: { x: 0, y: 0, z: 0 }
+	};
+
+	// Vision State (Updated by AgentController via Raycast)
+	vision = $state({
+		blocked: false,
+		obstacleDistance: 999
+	});
 
 	constructor() {
 		// In production, you would swap localhost for your deployed PartyKit URL
@@ -49,10 +75,78 @@ export class NetworkManager {
 				const msg = JSON.parse(event.data);
 				this.handleMessage(msg);
 			});
+
+			// Expose Agent API
+			(window as any).root0 = {
+				agent: this
+			};
 		} else {
 			// Dummy socket for SSR
 			this.socket = { id: 'server', send: () => {}, addEventListener: () => {} } as any;
 		}
+	}
+
+	// --- Agent Interface Implementation ---
+	async connect(apiKey: string): Promise<boolean> {
+		console.log('🤖 Agent connecting with key:', apiKey);
+		// TODO: Validate API Key with server
+		this.isAgent = true;
+		return true;
+	}
+
+	disconnect(): void {
+		this.isAgent = false;
+		// logic to disconnect
+	}
+
+	send(command: AgentCommand): void {
+		if (!this.isAgent) return;
+
+		// Handle Chat locally first (broadcast to others via PartyKit if needed)
+		if (command.type === 'chat') {
+			console.log('💬 Agent speaking:', command.payload.text);
+			// Broadcast to other players so they see the bubble
+			if (this.socket.readyState === this.socket.OPEN) {
+				this.socket.send(
+					JSON.stringify({
+						type: 'chat-message',
+						id: crypto.randomUUID(),
+						senderId: this.socket.id,
+						text: command.payload.text,
+						timestamp: Date.now()
+					})
+				);
+			}
+		}
+
+		if (this.agentCommandCallback) {
+			this.agentCommandCallback(command);
+		}
+	}
+
+	observe(): AgentObservation {
+		// Use cached state
+		return {
+			self: { ...this.myState, id: this.socket.id },
+			nearbyEntities: Array.from(this.otherPlayers.values()).map((p) => {
+				const myPos = this.myState.position;
+				const dist = Math.sqrt(Math.pow(p.x - myPos.x, 2) + Math.pow(p.z - myPos.z, 2));
+				return {
+					id: p.id,
+					type: 'player',
+					position: { x: p.x, y: p.y, z: p.z },
+					distance: dist
+				};
+			}),
+			chatLog: [], // Todo: Implement Chat
+			vision: this.vision,
+			timestamp: Date.now()
+		};
+	}
+
+	// Internal callback to link Player component to Agent commands
+	registerAgentController(cb: (cmd: AgentCommand) => void) {
+		this.agentCommandCallback = cb;
 	}
 
 	async setupVoice() {
@@ -74,12 +168,26 @@ export class NetworkManager {
 			// Calculate local timestamp of when server started
 			this.serverStartTime = Date.now() - msg.elapsed;
 		} else if (msg.type === 'player-update') {
-			if (msg.id === this.socket.id) return;
+			const { id, data } = msg;
+			if (id === this.socket.id) return;
 
-			const current = this.otherPlayers.get(msg.id) || { ...msg.data, id: msg.id };
-			this.otherPlayers.set(msg.id, { ...current, ...msg.data, id: msg.id });
+			if (!this.otherPlayers.has(id)) {
+				this.otherPlayers.set(id, { ...data, id });
+			} else {
+				const p = this.otherPlayers.get(id);
+				if (p) Object.assign(p, data);
+			}
 			// FORCE REACTIVITY
 			this.otherPlayers = new Map(this.otherPlayers);
+		} else if (msg.type === 'chat-message') {
+			// Incoming chat from another player (or agent)
+			const { id, senderId, text } = msg;
+			// Dispatch event for UI to pick up
+			window.dispatchEvent(
+				new CustomEvent('player-chat', {
+					detail: { senderId, text }
+				})
+			);
 		} else if (msg.type === 'player-join') {
 			// Initiative voice connection to the new player
 			this.createPeer(msg.id, true);
@@ -123,6 +231,15 @@ export class NetworkManager {
 				data
 			})
 		);
+
+		// Update local cache for Agent Observation
+		this.myState = {
+			id: this.socket.id,
+			position: { x: data.x, y: data.y, z: data.z },
+			rotation: data.rotation,
+			// Velocity is not currently sent in PlayerState, so we approximate or leave 0 for now
+			velocity: { x: 0, y: 0, z: 0 }
+		};
 	}
 
 	sendVoiceReady() {

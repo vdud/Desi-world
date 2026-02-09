@@ -7,7 +7,7 @@
 	import { Environment, Sky, Stars } from '@threlte/extras';
 	import Sun from './Sun.svelte';
 
-	const movement = $state({
+	let movement = $state({
 		forward: 0,
 		backward: 0,
 		left: 0,
@@ -100,6 +100,6 @@
 
 	<Sun />
 	<World>
-		<Scene {movement} />
+		<Scene bind:movement />
 	</World>
 </Canvas>

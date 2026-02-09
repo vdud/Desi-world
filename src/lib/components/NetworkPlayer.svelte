@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { T, useTask } from '@threlte/core';
 	import { Collider, RigidBody, CollisionGroups } from '@threlte/rapier';
+	import { Text } from '@threlte/extras';
 	import type * as THREE from 'three';
 	import Character from './Player/Character.svelte';
 	import { network, type PlayerState } from '$lib/network/network.svelte';
 	import { audioListener } from '$lib/stores/commonStores';
+	import ChatBubble from './ChatBubble.svelte';
 
 	let props = $props<{ state: PlayerState }>();
 
@@ -51,12 +53,25 @@
 	});
 </script>
 
+```typescript
 <!-- 
   We use a Kinematic RigidBody for network players so they:
   1. Have collision (can block the local player)
   2. Don't fall due to local gravity (position is controlled by server/network)
 -->
 <T.Group position={[currentX, currentY, currentZ]} rotation.y={currentRot + Math.PI}>
+	{#if props.state.isAgent}
+		<Text
+			text="[BOT]"
+			position={[0, 2.6, 0]}
+			fontSize={0.3}
+			color="#ff00ff"
+			anchorX="center"
+			anchorY="middle"
+			billboard
+		/>
+	{/if}
+
 	{#if stream && $audioListener}
 		<!-- 3D Spatial Audio -->
 		<T.PositionalAudio
@@ -104,6 +119,11 @@
 			color={stream && stream.getAudioTracks().length > 0 ? '#00ff00' : '#ff0000'}
 		/>
 	</T.Mesh>
+
+	{#if props.state.showChatBubble}
+		<ChatBubble text={props.state.lastChatMessage} />
+	{/if}
+
 	<RigidBody type="kinematicPosition">
 		<CollisionGroups groups={[0]}>
 			<Collider shape={'capsule'} args={[0.55, 0.3]} />

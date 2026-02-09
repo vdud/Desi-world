@@ -5,13 +5,14 @@
 	import { T, useTask, useThrelte } from '@threlte/core';
 	import { RigidBody, CollisionGroups, Collider } from '@threlte/rapier';
 	import Controller from './Player Controller/ThirdPersonControls.svelte';
+	import AgentController from './Player Controller/AgentController.svelte';
 	import Character from './Character.svelte';
 	import { useRapier } from '@threlte/rapier';
 	import { Ray } from '@dimforge/rapier3d-compat';
 	import { playerPosition, audioListener } from '$lib/stores/commonStores';
 	import { network } from '$lib/network/network.svelte';
 
-	const { movement } = $props();
+	let { movement = $bindable() } = $props();
 
 	const { world } = useRapier();
 	const { renderer } = useThrelte();
@@ -140,7 +141,8 @@
 				character: 'anon',
 				color: randomColor,
 				metalness: randomMetalness,
-				roughness: randomRoughness
+				roughness: randomRoughness,
+				isAgent: network.isAgent
 			});
 			lastSendTime = now;
 		}
@@ -191,7 +193,11 @@
 			if (ref.context.state === 'suspended') audioContextSuspended = true;
 		}}
 	/>
-	<Controller object={capsule} {movement} />
+	{#if network.isAgent}
+		<AgentController object={capsule} bind:movement />
+	{:else}
+		<Controller object={capsule} {movement} />
+	{/if}
 </T.PerspectiveCamera>
 
 <!-- Player capsule - this ref is passed to controller -->

@@ -121,3 +121,41 @@ SvelteKit defaults to Server-Side Rendering (SSR).
 - **Performance**: Faster installation speed.
 - **Disk Space**: Efficient content-addressable storage.
 - **Strictness**: Prevents phantom dependencies (accessing packages not listed in package.json).
+
+---
+
+## 7. Multiplayer Strategy (PartyKit + WebRTC)
+
+### Context
+
+Real-time multiplayer requires low-latency data sync (position) and high-bandwidth streaming (voice).
+
+### Decision
+
+**Hybrid Approach: PartyKit for State Relay, WebRTC Mesh for Voice.**
+
+### Why
+
+- **PartyKit (Cloudflare Workers)**: extremely fast, serverless WebSockets. Perfect for broadcasting small JSON packets (position, rotation) to everyone in the room.
+- **WebRTC Mesh**: Voice data is heavy and expensive to relay through a server. P2P (Peer-to-Peer) removes the middleman, reducing cost and latency for small groups.
+
+---
+
+## 8. Web3 Global Singleton
+
+### Context
+
+Wallet connection state (Address, Chain ID, Balance) is needed everywhere:
+
+- **UI**: To show "Connect" button or "0x123...".
+- **Game**: To verify ownership of in-game items (NFTs).
+- **Network**: To use the address as a unique Player ID.
+
+### Decision
+
+**Use a Global Rune Singleton (`web3.svelte.ts`).**
+
+### Why
+
+- **Availability**: Accessible via `import { web3 } from '$lib/web3/web3.svelte'` in any file, without needing Svelte Context or prop drilling.
+- **Reactivity**: Since it uses `$state`, any component reading `web3.img` or `web3.address` effectively subscribes to updates automatically.
