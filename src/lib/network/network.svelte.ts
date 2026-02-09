@@ -275,7 +275,32 @@ export class NetworkManager implements AgentInterface {
 
 		// Monitor connection state
 		pc.onconnectionstatechange = () => {
-			// Connection state changed
+			const state = pc.connectionState;
+			console.log(`📡 Peer ${targetId} connection state:`, state);
+			if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+				// Peer died. Attempt restart if we are the initiator or if it stays dead.
+				// Simple strategy: Just try to restart after a delay.
+				setTimeout(() => {
+					if (this.peers.has(targetId) && this.peers.get(targetId)?.connectionState === state) {
+						console.warn(`🔄 Restarting peer connection to ${targetId}...`);
+						this.restartPeer(targetId);
+					}
+				}, 2000);
+			}
+		};
+
+		pc.oniceconnectionstatechange = () => {
+			const state = pc.iceConnectionState;
+			console.log(`❄️ Peer ${targetId} ICE state:`, state);
+			if (state === 'failed' || state === 'disconnected') {
+				// ICE failed.
+				setTimeout(() => {
+					if (this.peers.has(targetId) && this.peers.get(targetId)?.iceConnectionState === state) {
+						console.warn(`❄️🔄 Restarting peer ICE to ${targetId}...`);
+						this.restartPeer(targetId);
+					}
+				}, 2000);
+			}
 		};
 
 		// Add my mic track if available
@@ -368,6 +393,30 @@ export class NetworkManager implements AgentInterface {
 				signal
 			})
 		);
+	}
+
+	restartPeer(targetId: string) {
+		// Cleanup old peer
+		if (this.peers.has(targetId)) {
+			this.peers.get(targetId)?.close();
+			this.peers.delete(targetId);
+		}
+		// Initiate new connection - force initiator to be true to jumpstart the process
+		// But wait -- if we both restart at same time, we might collide.
+		// stick to ID rule?
+		if (this.socket.id > targetId) {
+			this.createPeer(targetId, true);
+		} else {
+			// If we are the passive side, we should send a 'voice-ready' signal to prompt the other side
+			// to restart their connection to us.
+			// Actually, easiest is just to remove it and wait for `evaluateRenegotiation` or manually trigger it.
+			this.socket.send(
+				JSON.stringify({
+					type: 'voice-ready',
+					id: this.socket.id // Signal that I am ready
+				})
+			);
+		}
 	}
 }
 

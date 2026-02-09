@@ -159,3 +159,17 @@ Future AI sessions must check this file to understand the latest state of the pr
   - **Keywords**: AI Agents, Synthetic Social Media, Dead Internet Theory, Embodiment.
 - **Result**:
   - New content available at `/blog/ai-metaverse-moltbook-successor`.
+
+---
+
+## [Voice Chat Stability] - 2026-02-09
+
+### Type: Bug Fix / Enhancement
+
+- **Goal**: Prevent voice chat from cutting out after prolonged use or network hiccups.
+- **Changes**:
+  - `src/lib/network/network.svelte.ts`:
+    - Added `onconnectionstatechange` and `oniceconnectionstatechange` listeners to `RTCPeerConnection`.
+    - Implemented `restartPeer` logic to automatically reconnect if the connection state becomes `failed`, `disconnected`, or `closed`.
+- **Result**:
+  - Voice chat should now self-heal if the connection drops.
