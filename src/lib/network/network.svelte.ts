@@ -189,8 +189,8 @@ export class NetworkManager implements AgentInterface {
 				})
 			);
 		} else if (msg.type === 'player-join') {
-			// Initiative voice connection to the new player
-			this.createPeer(msg.id, true);
+			// Do NOT initiate voice immediately. Wait for position update and proximity check.
+			// this.createPeer(msg.id, true);
 		} else if (msg.type === 'player-leave') {
 			this.otherPlayers.delete(msg.id);
 			this.otherPlayers = new Map(this.otherPlayers);
@@ -207,21 +207,32 @@ export class NetworkManager implements AgentInterface {
 		} else if (msg.type === 'voice-signal') {
 			this.handleSignal(msg.senderId, msg.signal);
 		} else if (msg.type === 'voice-ready') {
-			// Always clean up existing connection to ensure fresh start
-			if (this.peers.has(msg.id)) {
-				this.peers.get(msg.id)?.close();
-				this.peers.delete(msg.id);
-			}
+			// Only connect if within range
+			const p = this.otherPlayers.get(msg.id);
+			if (p) {
+				const myPos = this.myState.position;
+				const dist = Math.sqrt(Math.pow(p.x - myPos.x, 2) + Math.pow(p.z - myPos.z, 2));
 
-			// Deterministic Initiation: Only one side initiates the rebuild (The one with larger ID)
-			// The other side waits for the Offer.
-			if (this.socket.id > msg.id) {
-				this.createPeer(msg.id, true);
-			} else {
-				// Waiting for renegotiation offer
+				if (dist <= this.VOICE_MAX_DISTANCE) {
+					// Always clean up existing connection to ensure fresh start
+					if (this.peers.has(msg.id)) {
+						this.peers.get(msg.id)?.close();
+						this.peers.delete(msg.id);
+					}
+
+					// Deterministic Initiation: Only one side initiates the rebuild (The one with larger ID)
+					if (this.socket.id > msg.id) {
+						this.createPeer(msg.id, true);
+					}
+				}
 			}
 		}
 	}
+
+	// Proximity Voice Chat Settings
+	readonly VOICE_MAX_DISTANCE = 25; // meters
+	readonly PROXIMITY_CHECK_INTERVAL = 1000; // ms
+	lastProximityCheck = 0;
 
 	sendUpdate(data: Omit<PlayerState, 'id'>) {
 		if (this.socket.readyState !== this.socket.OPEN) return;
@@ -232,36 +243,72 @@ export class NetworkManager implements AgentInterface {
 			})
 		);
 
-		// Update local cache for Agent Observation
+		// Update local cache
 		this.myState = {
 			id: this.socket.id,
 			position: { x: data.x, y: data.y, z: data.z },
 			rotation: data.rotation,
-			// Velocity is not currently sent in PlayerState, so we approximate or leave 0 for now
 			velocity: { x: 0, y: 0, z: 0 }
 		};
+
+		// Run proximity check periodically
+		const now = Date.now();
+		if (now - this.lastProximityCheck > this.PROXIMITY_CHECK_INTERVAL) {
+			this.checkVoiceProximity();
+			this.lastProximityCheck = now;
+		}
+	}
+
+	checkVoiceProximity() {
+		const myPos = this.myState.position;
+
+		this.otherPlayers.forEach((player) => {
+			const dist = Math.sqrt(
+				Math.pow(player.x - myPos.x, 2) +
+					Math.pow(player.y - myPos.y, 2) +
+					Math.pow(player.z - myPos.z, 2)
+			);
+
+			if (dist <= this.VOICE_MAX_DISTANCE) {
+				// Within Range
+				if (!this.peers.has(player.id)) {
+					// Connect if we are the dominant ID (to avoid glare/collision)
+					if (this.socket.id > player.id) {
+						console.log(`🔊 ${player.id} entered voice range (${dist.toFixed(1)}m). Connecting...`);
+						this.createPeer(player.id, true);
+					}
+				}
+			} else {
+				// Out of Range
+				if (this.peers.has(player.id)) {
+					console.log(`🔇 ${player.id} left voice range (${dist.toFixed(1)}m). Disconnecting...`);
+					this.peers.get(player.id)?.close();
+					this.peers.delete(player.id);
+					// Also clean up streams
+					if (this.voiceStreams.has(player.id)) {
+						this.voiceStreams.delete(player.id);
+						this.voiceStreams = new Map(this.voiceStreams);
+					}
+				}
+			}
+		});
 	}
 
 	sendVoiceReady() {
+		// No-op for proximity version?
+		// Actually we still need this for the initial 'mic readiness',
+		// but the proximity check usually handles the connection creation.
+		// We can leave it, but maybe guard it?
 		if (this.socket.readyState !== this.socket.OPEN) return;
-		this.socket.send(JSON.stringify({ type: 'voice-ready' }));
+		// this.socket.send(JSON.stringify({ type: 'voice-ready' }));
+		// ^ Disable global broadcast of voice-ready to prevent mass-connections.
+		// Proximity loop handles it.
 	}
 
 	// Call this when we get a mic or change tracks
 	evaluateRenegotiation() {
-		this.sendVoiceReady();
-
-		// If we are the dominant ID, we must initiate the new connection
-		// If we are submissive ID, we wait for their offer (triggered by our voice-ready)
-		for (const [id] of this.otherPlayers) {
-			if (this.socket.id > id) {
-				if (this.peers.has(id)) {
-					this.peers.get(id)?.close();
-					this.peers.delete(id);
-				}
-				this.createPeer(id, true);
-			}
-		}
+		// Just trigger a proximity check immediately
+		this.checkVoiceProximity();
 	}
 
 	// WebRTC Mesh Logic

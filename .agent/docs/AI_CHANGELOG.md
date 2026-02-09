@@ -173,3 +173,21 @@ Future AI sessions must check this file to understand the latest state of the pr
     - Implemented `restartPeer` logic to automatically reconnect if the connection state becomes `failed`, `disconnected`, or `closed`.
 - **Result**:
   - Voice chat should now self-heal if the connection drops.
+
+---
+
+## [Proximity Voice Chat] - 2026-02-09
+
+### Type: Feature / Enhancement
+
+- **Goal**: Optimize performance and realism by only connecting voice with nearby players (Distance < 25m).
+- **Changes**:
+  - `src/lib/network/network.svelte.ts`:
+    - Added `VOICE_MAX_DISTANCE` (25m) and `PROXIMITY_CHECK_INTERVAL` (1s).
+    - Added `checkVoiceProximity()` loop to automatically connect/disconnect peers based on distance.
+    - Removed automatic connection on `player-join`.
+    - Added distance guard to `voice-ready` signal.
+- **Result**:
+  - Players only hear those around them.
+  - Greatly reduced bandwidth usage in crowded rooms.
+  - Walking away and coming back acts as a natural "refresh" for the connection.
