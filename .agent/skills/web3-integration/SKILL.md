@@ -33,10 +33,8 @@ Do NOT use the default React hooks or Svelte 4 stores. We wrap the Web3 logic in
 ### `src/lib/web3/web3.svelte.ts`
 
 ```typescript
-import { createWeb3Modal } from '@reown/appkit/react'; // or specific svelte entry if available, otherwise use core
 import { createConfig, http } from '@wagmi/core';
 import { mainnet, arbitrum } from '@reown/appkit/networks';
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
 // Singleton State
 class Web3State {
@@ -49,13 +47,17 @@ class Web3State {
 		// Init logic here
 	}
 
-	init(projectId: string) {
+	async init(projectId: string) {
+		// Dynamic import to avoid SSR errors
+		const { createAppKit } = await import('@reown/appkit/react');
+		const { WagmiAdapter } = await import('@reown/appkit-adapter-wagmi');
+
 		// Setup Wagmi Adapter
 		const networks = [mainnet, arbitrum];
 		const wagmiAdapter = new WagmiAdapter({
 			networks,
 			projectId,
-			ssr: true
+			ssr: false
 		});
 
 		// Create Modal

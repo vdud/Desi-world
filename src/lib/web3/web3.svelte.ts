@@ -1,7 +1,5 @@
-import { createAppKit } from '@reown/appkit';
-import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-import { mainnet, arbitrum, base, type AppKitNetwork } from '@reown/appkit/networks';
-import { type AppKit } from '@reown/appkit';
+import type { AppKitNetwork } from '@reown/appkit/networks';
+import { mainnet, arbitrum, base } from '@reown/appkit/networks';
 import { getAccount, watchAccount, disconnect, type Config, reconnect } from '@wagmi/core';
 import { browser } from '$app/environment';
 
@@ -22,8 +20,8 @@ class Web3Manager {
 	isInitialized = $state(false);
 
 	// Internal
-	private modal: AppKit | null = null;
-	private wagmiAdapter: WagmiAdapter | null = null;
+	private modal: any = null;
+	private wagmiAdapter: any = null;
 
 	constructor() {
 		if (browser) {
@@ -31,10 +29,14 @@ class Web3Manager {
 		}
 	}
 
-	init() {
+	async init() {
 		if (this.isInitialized || !projectId) return;
 
 		try {
+			// Dynamic import to avoid SSR issues with walletconnect deps
+			const { createAppKit } = await import('@reown/appkit');
+			const { WagmiAdapter } = await import('@reown/appkit-adapter-wagmi');
+
 			// 1. Create Wagmi Adapter
 			this.wagmiAdapter = new WagmiAdapter({
 				networks,
@@ -50,7 +52,7 @@ class Web3Manager {
 				metadata: {
 					name: 'root0',
 					description: 'The Metaverse is Here',
-					url: 'https://root0.vercel.app', // Placeholder
+					url: 'https://root0.vercel.app',
 					icons: ['https://root0.vercel.app/icon.png']
 				},
 				features: {
@@ -71,7 +73,7 @@ class Web3Manager {
 			});
 
 			// Attempt reconnect if possible (handled by wagmi usually, but explicit call helps debug)
-			reconnect(this.wagmiAdapter.wagmiConfig as Config);
+			if (this.wagmiAdapter) reconnect(this.wagmiAdapter.wagmiConfig as Config);
 
 			this.isInitialized = true;
 			console.log('Web3Manager Initialized');
