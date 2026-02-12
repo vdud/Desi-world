@@ -15,7 +15,12 @@ const config = {
 
 	extensions: ['.svelte', '.md'],
 
-	kit: { adapter: adapter() }
+	kit: {
+		adapter: adapter(),
+		prerender: {
+			entries: ['*', '/sitemap.xml']
+		}
+	}
 };
 
 export default config;
