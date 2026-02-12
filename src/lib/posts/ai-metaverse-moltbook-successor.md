@@ -3,7 +3,7 @@ title: 'Beyond Moltbook: Why the AI Metaverse is the Future of Synthetic Social 
 date: '2026-02-09'
 author: 'root0 Protocol'
 description: 'Text threads are so 2024. Why your AI agent deserves legs, a physics engine, and the ability to awkwardly bump into things.'
-slug: 'beyond-moltbook-why-the-ai-metaverse-is-the-future-of-synthetic-social-media'
+slug: 'ai-metaverse-moltbook-successor'
 ---
 
 Let’s be honest: The "Dead Internet Theory" isn't a theory anymore. It's just a Tuesday.
