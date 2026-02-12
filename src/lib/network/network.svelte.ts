@@ -31,6 +31,7 @@ export class NetworkManager implements AgentInterface {
 	myId = $state<string>('');
 	myStream: MediaStream | null = null;
 	peers = new Map<string, RTCPeerConnection>();
+	iceQueues = new Map<string, RTCIceCandidate[]>();
 
 	// Agent Mode
 	isAgent = $state(false);
@@ -153,13 +154,14 @@ export class NetworkManager implements AgentInterface {
 		if (typeof window === 'undefined') return;
 		try {
 			this.myStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+			console.log('[VoiceDebug] 🎙️ Microphone access granted.');
 			this.evaluateRenegotiation();
 
 			// If we already have peers (late join), add the track to them?
 			// Actually, in this mesh flow, we usually connect on join.
 			// If we join late, we wait for 'player-join' from others or initiate 'player-join' ourselves.
 		} catch (e) {
-			console.error('❌ Microphone access denied', e);
+			console.error('[VoiceDebug] ❌ Microphone access denied', e);
 		}
 	}
 
@@ -213,7 +215,7 @@ export class NetworkManager implements AgentInterface {
 				const myPos = this.myState.position;
 				const dist = Math.sqrt(Math.pow(p.x - myPos.x, 2) + Math.pow(p.z - myPos.z, 2));
 
-				if (dist <= this.VOICE_MAX_DISTANCE) {
+				if (dist <= this.VOICE_CONNECT_DISTANCE) {
 					// Always clean up existing connection to ensure fresh start
 					if (this.peers.has(msg.id)) {
 						this.peers.get(msg.id)?.close();
@@ -230,7 +232,8 @@ export class NetworkManager implements AgentInterface {
 	}
 
 	// Proximity Voice Chat Settings
-	readonly VOICE_MAX_DISTANCE = 25; // meters
+	readonly VOICE_CONNECT_DISTANCE = 20; // meters (Join here)
+	readonly VOICE_DISCONNECT_DISTANCE = 25; // meters (Leave here - Hysteresis)
 	readonly PROXIMITY_CHECK_INTERVAL = 1000; // ms
 	lastProximityCheck = 0;
 
@@ -269,29 +272,49 @@ export class NetworkManager implements AgentInterface {
 					Math.pow(player.z - myPos.z, 2)
 			);
 
-			if (dist <= this.VOICE_MAX_DISTANCE) {
-				// Within Range
-				if (!this.peers.has(player.id)) {
-					// Connect if we are the dominant ID (to avoid glare/collision)
-					if (this.socket.id > player.id) {
-						console.log(`🔊 ${player.id} entered voice range (${dist.toFixed(1)}m). Connecting...`);
-						this.createPeer(player.id, true);
-					}
+			// Logic:
+			// If connected: Check if > DISCONNECT_DISTANCE
+			// If not connected: Check if < CONNECT_DISTANCE
+
+			if (this.peers.has(player.id)) {
+				// We are currently connected
+				if (dist > this.VOICE_DISCONNECT_DISTANCE) {
+					console.log(
+						`[VoiceDebug] 🔇 ${player.id} LEFT range (${dist.toFixed(1)}m > ${this.VOICE_DISCONNECT_DISTANCE}m). Disconnecting...`
+					);
+					this.cleanupPeer(player.id);
 				}
 			} else {
-				// Out of Range
-				if (this.peers.has(player.id)) {
-					console.log(`🔇 ${player.id} left voice range (${dist.toFixed(1)}m). Disconnecting...`);
-					this.peers.get(player.id)?.close();
-					this.peers.delete(player.id);
-					// Also clean up streams
-					if (this.voiceStreams.has(player.id)) {
-						this.voiceStreams.delete(player.id);
-						this.voiceStreams = new Map(this.voiceStreams);
+				// We are NOT connected
+				if (dist <= this.VOICE_CONNECT_DISTANCE) {
+					// Connect if we are the dominant ID (to avoid glare/collision)
+					if (this.socket.id > player.id) {
+						console.log(
+							`[VoiceDebug] 🔊 ${player.id} ENTERED range (${dist.toFixed(1)}m <= ${this.VOICE_CONNECT_DISTANCE}m). Initiating Connection...`
+						);
+						this.createPeer(player.id, true);
+					} else {
+						// We wait for them to connect to us
+						// console.log(`[VoiceDebug] ⏳ ${player.id} in range (${dist.toFixed(1)}m). Waiting for offer...`);
 					}
 				}
 			}
 		});
+	}
+
+	cleanupPeer(targetId: string) {
+		if (this.peers.has(targetId)) {
+			this.peers.get(targetId)?.close();
+			this.peers.delete(targetId);
+		}
+		if (this.voiceStreams.has(targetId)) {
+			this.voiceStreams.delete(targetId);
+			// Force reactivity update
+			this.voiceStreams = new Map(this.voiceStreams);
+		}
+		if (this.iceQueues.has(targetId)) {
+			this.iceQueues.delete(targetId);
+		}
 	}
 
 	sendVoiceReady() {
@@ -323,7 +346,7 @@ export class NetworkManager implements AgentInterface {
 		// Monitor connection state
 		pc.onconnectionstatechange = () => {
 			const state = pc.connectionState;
-			console.log(`📡 Peer ${targetId} connection state:`, state);
+			console.log(`[VoiceDebug] 📡 Peer ${targetId} connection state:`, state);
 			if (state === 'failed' || state === 'disconnected' || state === 'closed') {
 				// Peer died. Attempt restart if we are the initiator or if it stays dead.
 				// Simple strategy: Just try to restart after a delay.
@@ -338,7 +361,7 @@ export class NetworkManager implements AgentInterface {
 
 		pc.oniceconnectionstatechange = () => {
 			const state = pc.iceConnectionState;
-			console.log(`❄️ Peer ${targetId} ICE state:`, state);
+			console.log(`[VoiceDebug] ❄️ Peer ${targetId} ICE state:`, state);
 			if (state === 'failed' || state === 'disconnected') {
 				// ICE failed.
 				setTimeout(() => {
@@ -406,6 +429,16 @@ export class NetworkManager implements AgentInterface {
 
 				await pc.setRemoteDescription(new RTCSessionDescription(signal.sdp));
 
+				// FLUSH ICE QUEUE
+				if (this.iceQueues.has(senderId)) {
+					const queue = this.iceQueues.get(senderId)!;
+					console.log(`[VoiceDebug] 🧊 Flushing ${queue.length} ICE candidates for ${senderId}`);
+					for (const candidate of queue) {
+						await pc.addIceCandidate(candidate);
+					}
+					this.iceQueues.delete(senderId);
+				}
+
 				// Ensure we attach our mic tracks if we have them but haven't added them to this PC yet
 				if (this.myStream) {
 					const senders = pc.getSenders();
@@ -424,7 +457,13 @@ export class NetworkManager implements AgentInterface {
 				if (pc.remoteDescription) {
 					await pc.addIceCandidate(new RTCIceCandidate(signal.ice));
 				} else {
-					console.warn(`Buffer/Drop ICE from ${senderId} because remoteDescription is null`);
+					console.warn(
+						`[VoiceDebug] 🧊 Buffering ICE from ${senderId} because remoteDescription is null`
+					);
+					if (!this.iceQueues.has(senderId)) {
+						this.iceQueues.set(senderId, []);
+					}
+					this.iceQueues.get(senderId)!.push(new RTCIceCandidate(signal.ice));
 				}
 			}
 		} catch (e) {
