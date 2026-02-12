@@ -16,7 +16,7 @@
 	<link rel="icon" href={favicon} />
 	<link
 		rel="canonical"
-		href="https://root0.vercel.app{page.url.pathname === '/' ? '' : page.url.pathname}"
+		href="https://root0.online{page.url.pathname === '/' ? '' : page.url.pathname}"
 	/>
 </svelte:head>
 

@@ -21,7 +21,7 @@ function escapeXml(unsafe: string): string {
 }
 
 export async function GET() {
-	const site = 'https://root0.vercel.app'; // Replace with your actual domain
+	const site = 'https://root0.online'; // Replace with your actual domain
 
 	// 1. Static Pages (Manually listed)
 	const pages = [

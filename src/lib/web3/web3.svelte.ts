@@ -52,8 +52,8 @@ class Web3Manager {
 				metadata: {
 					name: 'root0',
 					description: 'The Metaverse is Here',
-					url: 'https://root0.vercel.app',
-					icons: ['https://root0.vercel.app/icon.png']
+					url: 'https://root0.online',
+					icons: ['https://root0.online/icon.png']
 				},
 				features: {
 					analytics: true

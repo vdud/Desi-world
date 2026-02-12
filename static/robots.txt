@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://root0.vercel.app/sitemap.xml
+Sitemap: https://root0.online/sitemap.xml
