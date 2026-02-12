@@ -1,3 +1,5 @@
+export const prerender = true;
+
 export async function GET() {
 	const site = 'https://root0.vercel.app'; // Replace with your actual domain
 

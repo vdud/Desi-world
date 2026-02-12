@@ -1,3 +1,5 @@
+export const prerender = true;
+
 // Helper to escape XML special characters
 function escapeXml(unsafe: string): string {
 	return unsafe.replace(/[<>&'"]/g, (c) => {
