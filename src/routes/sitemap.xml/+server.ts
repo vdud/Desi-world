@@ -1,3 +1,23 @@
+// Helper to escape XML special characters
+function escapeXml(unsafe: string): string {
+	return unsafe.replace(/[<>&'"]/g, (c) => {
+		switch (c) {
+			case '<':
+				return '&lt;';
+			case '>':
+				return '&gt;';
+			case '&':
+				return '&amp;';
+			case "'":
+				return '&apos;';
+			case '"':
+				return '&quot;';
+			default:
+				return c;
+		}
+	});
+}
+
 export async function GET() {
 	const site = 'https://root0.vercel.app'; // Replace with your actual domain
 
@@ -28,17 +48,18 @@ export async function GET() {
 		return `/blog/${slug}`;
 	});
 
-	// Combine all paths
-	const allPaths = [...pages, ...blogPages];
+	// Combine all paths & clean
+	const allPaths = [...pages, ...blogPages].map((p) => p.trim());
 
 	// Generate XML
 	const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${allPaths
 	.map((path) => {
+		const loc = escapeXml(`${site}${path}`);
 		return `
 	<url>
-		<loc>${site}${path}</loc>
+		<loc>${loc}</loc>
 		<changefreq>daily</changefreq>
 		<priority>0.7</priority>
 	</url>`;
@@ -48,7 +69,8 @@ ${allPaths
 
 	return new Response(sitemap, {
 		headers: {
-			'Content-Type': 'application/xml'
+			'Content-Type': 'application/xml',
+			'Cache-Control': 'max-age=0, s-maxage=3600'
 		}
 	});
 }
