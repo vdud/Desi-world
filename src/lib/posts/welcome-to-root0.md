@@ -1,8 +1,10 @@
 ---
-title: Welcome to root0
+
+title: 'Welcome to root0'
 date: '2026-02-09'
-description: The metaverse is here, and it's simpler than you think.
-author: root0 Team
+description: 'The metaverse is here, and it''s simpler than you think.'
+author: 'root0 Team'
+slug: 'welcome-to-root0'
 ---
 
 # Welcome to root0
@@ -15,7 +17,9 @@ Because the web is the most accessible platform in human history. By building on
 
 ## What's Next?
 
+```
 - **Multiplayer**: Connect with friends in real-time. (In Progress)
+```
 - **Customization**: Design your own avatar.
 - **Spaces**: Build your own corner of the metaverse.
 

@@ -98,4 +98,14 @@
 	.back-link:hover {
 		color: var(--text-primary);
 	}
+
+	:global(.markdown-body a) {
+		color: blue;
+		text-decoration: underline;
+	}
+
+	:global(.language-bash) {
+		width: 100%;
+		text-wrap: wrap;
+	}
 </style>
