@@ -14,6 +14,10 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
+	<link
+		rel="canonical"
+		href="https://root0.vercel.app{page.url.pathname === '/' ? '' : page.url.pathname}"
+	/>
 </svelte:head>
 
 <!-- Don't show the global header on the game page -->
