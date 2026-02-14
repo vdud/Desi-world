@@ -21,7 +21,7 @@ export interface WorldAgent {
 
 const FLEET_URL = browser && window.location.hostname === 'localhost' 
 	? 'http://localhost:3000' 
-	: 'http://13.204.77.125:3000';
+	: '/api/fleet';
 
 class AgentManagerState {
 	agents = $state<AgentConfig[]>([]);

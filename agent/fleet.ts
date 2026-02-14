@@ -100,4 +100,37 @@ app.post('/agent/stop', (req, res) => {
 
 app.listen(PORT, () => {
 	console.log(`🚀 Agent Fleet Manager running on port ${PORT}`);
+
+	// --- AUTO-START DEFAULT AGENT (BUNTY) ---
+	const defaultAgent = {
+		id: 'default-bunty',
+		name: process.env.AGENT_NAME || 'Bunty',
+		purpose: process.env.AGENT_PURPOSE || 'To be a Guide',
+		behaviour: process.env.AGENT_BEHAVIOUR || 'Rude yet sarcastic'
+	};
+
+	console.log(`[Fleet] Auto-starting default agent: ${defaultAgent.name}...`);
+	
+	const env = { 
+		...process.env, 
+		AGENT_ID: defaultAgent.id,
+		AGENT_NAME: defaultAgent.name,
+		AGENT_PURPOSE: defaultAgent.purpose,
+		AGENT_BEHAVIOUR: defaultAgent.behaviour
+	};
+
+	const child = spawn('npx', ['tsx', 'agent/main.ts'], {
+		stdio: 'inherit',
+		env,
+		cwd: process.cwd()
+	});
+
+	child.on('exit', () => cleanup(defaultAgent.id));
+	
+	agents.set(defaultAgent.id, {
+		process: child,
+		id: defaultAgent.id,
+		name: defaultAgent.name,
+		startTime: Date.now()
+	});
 });
