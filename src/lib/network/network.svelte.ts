@@ -16,6 +16,7 @@ export type PlayerState = {
 	name?: string;
 	showChatBubble?: boolean;
 	lastChatMessage?: string;
+	lastMessageAt?: number;
 	walletAddress?: string;
 };
 
@@ -207,6 +208,7 @@ export class NetworkManager implements AgentInterface {
 				this.otherPlayers.set(senderId, {
 					...p,
 					lastChatMessage: text,
+					lastMessageAt: Date.now(),
 					showChatBubble: true
 				});
 				// Force reactivity

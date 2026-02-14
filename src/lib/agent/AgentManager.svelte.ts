@@ -122,9 +122,9 @@ class AgentManagerState {
 			}
 		} else {
 			this.addAgent({
-				name: 'Butler Bot',
-				purpose: 'To serve and greet guests',
-				behaviour: 'Polite'
+				name: 'Bunty',
+				purpose: 'To be a Guide',
+				behaviour: 'Rude yet sarcastic'
 			});
 		}
 	}

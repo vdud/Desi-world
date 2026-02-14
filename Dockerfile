@@ -24,10 +24,10 @@ COPY . .
 RUN mkdir -p .agent/memories
 
 # Define environment variables with defaults
-ENV AGENT_NAME="DockerBot"
-ENV AGENT_PURPOSE="To serve and protect"
-ENV AGENT_BEHAVIOUR="Friendly"
+ENV AGENT_NAME="Bunty"
+ENV AGENT_PURPOSE="To be a Guide"
+ENV AGENT_BEHAVIOUR="Rude yet sarcastic"
 ENV NEXT_PUBLIC_PARTYKIT_HOST="localhost:1999"
 
-# Command to run the agent
-CMD ["npx", "tsx", "agent/main.ts"]
+# Command to run the fleet manager (for multi-agent support)
+CMD ["npx", "tsx", "agent/fleet.ts"]

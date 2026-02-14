@@ -4,7 +4,7 @@
 	import { fade } from 'svelte/transition';
 	import type { Group } from 'three';
 
-	let { text } = $props();
+	let { text, timestamp } = $props();
 	let isVisible = $state(false);
 	let group = $state<Group>();
 	const { camera } = useThrelte();
@@ -12,14 +12,20 @@
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	$effect(() => {
-		if (text && text.trim().length > 0) {
-			console.log(`[ChatBubble] New message received: "${text}"`);
-			isVisible = true;
-			if (timer) clearTimeout(timer);
-			timer = setTimeout(() => {
-				console.log(`[ChatBubble] Hiding message: "${text}"`);
-				isVisible = false;
-			}, 5000);
+		if (text && text.trim().length > 0 && timestamp) {
+			console.log(`[ChatBubble] New message received: "${text}" at ${timestamp}`);
+			isVisible = false; // Briefly hide to trigger re-render if it was already visible
+			
+			// We use a microtask or a short timeout to toggle it back to true
+			// so the #if block actually sees a change.
+			setTimeout(() => {
+				isVisible = true;
+				if (timer) clearTimeout(timer);
+				timer = setTimeout(() => {
+					console.log(`[ChatBubble] Hiding message: "${text}"`);
+					isVisible = false;
+				}, 5000);
+			}, 50);
 		} else {
 			isVisible = false;
 			if (timer) clearTimeout(timer);

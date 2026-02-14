@@ -127,7 +127,7 @@
 		/>
 	</T.Mesh>
 
-	<ChatBubble text={props.state.lastChatMessage} />
+	<ChatBubble text={props.state.lastChatMessage} timestamp={props.state.lastMessageAt} />
 
 	<RigidBody type="kinematicPosition">
 		<CollisionGroups groups={[0]}>
