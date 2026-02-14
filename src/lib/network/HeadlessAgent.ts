@@ -1,4 +1,6 @@
 import PartySocket from 'partysocket';
+import { WebSocket } from 'ws';
+import { crypto } from 'node:crypto';
 import type {
 	AgentCommand,
 	AgentObservation,
@@ -6,7 +8,6 @@ import type {
 	EntityState,
 	ChatMessage
 } from './AgentProtocol';
-import { WebSocket } from 'ws';
 
 // Polyfill WebSocket for Node.js
 global.WebSocket = WebSocket as any;

@@ -201,6 +201,7 @@ export class NetworkManager implements AgentInterface {
 		} else if (msg.type === 'chat-message') {
 			// Incoming chat from another player (or agent)
 			const { id, senderId, text } = msg;
+			console.log(`[NetworkManager] Chat received from ${senderId}: "${text}"`);
 
 			// Update the sender's state to show the bubble
 			if (this.otherPlayers.has(senderId)) {
