@@ -1,0 +1,4 @@
+version: '3.8'
+
+services:
+  # Add production services here (e.g., main-app, database)

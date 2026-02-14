@@ -1,6 +1,8 @@
 <!-- src/lib/components/Player/Player.svelte -->
 <script lang="ts">
 	import * as THREE from 'three';
+	import { get } from 'svelte/store';
+
 	import { Euler, Vector3 } from 'three';
 	import { T, useTask, useThrelte } from '@threlte/core';
 	import { RigidBody, CollisionGroups, Collider } from '@threlte/rapier';
@@ -9,8 +11,14 @@
 	import Character from './Character.svelte';
 	import { useRapier } from '@threlte/rapier';
 	import { Ray } from '@dimforge/rapier3d-compat';
-	import { playerPosition, audioListener } from '$lib/stores/commonStores';
+	import {
+		playerPosition,
+		playerRotation,
+		audioListener,
+		playerName
+	} from '$lib/stores/commonStores.ts';
 	import { network } from '$lib/network/network.svelte';
+	import { web3 } from '$lib/web3/web3.svelte';
 
 	let { movement = $bindable() } = $props();
 
@@ -53,7 +61,7 @@
 		const newX = SPAWN_POS.x + respawnOffset;
 		const newZ = SPAWN_POS.z + respawnOffset;
 
-		rigidBody.setTranslation({ x: newX, y: SPAWN_POS.y, z: newZ }, true);
+		rigidBody.setTranslation({ x: newX, y: SPAWN_POS.y, z: newZ });
 		// Reset velocity (stop falling momentum)
 		rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
 		rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
@@ -142,7 +150,9 @@
 				color: randomColor,
 				metalness: randomMetalness,
 				roughness: randomRoughness,
-				isAgent: network.isAgent
+				isAgent: network.isAgent,
+				walletAddress: web3.address || '',
+				name: get(playerName)
 			});
 			lastSendTime = now;
 		}
@@ -188,6 +198,7 @@
 <T.PerspectiveCamera makeDefault fov={75} near={0.1} far={1000}>
 	<T.AudioListener
 		oncreate={(ref) => {
+			console.log('[Audio] Listener created & set', ref);
 			audioListener.set(ref);
 			// Check state immediately
 			if (ref.context.state === 'suspended') audioContextSuspended = true;
@@ -201,7 +212,7 @@
 </T.PerspectiveCamera>
 
 <!-- Player capsule - this ref is passed to controller -->
-<T.Group bind:ref={capsule} position={[position[0], position[1], position[2]]} rotation.y={Math.PI}>
+<T.Group bind:ref={capsule} position={[position[0], position[1], position[2]]}>
 	<RigidBody
 		bind:rigidBody
 		enabledRotations={[false, false, false]}

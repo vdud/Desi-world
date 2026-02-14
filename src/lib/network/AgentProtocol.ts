@@ -11,6 +11,16 @@ export interface AgentObservation {
 		blocked: boolean;
 		obstacleDistance: number;
 	};
+	marketListings: any[];
+	obstacles?: {
+		id: string;
+		position: { x: number; y: number; z: number };
+		radius: number;
+		distance: number;
+		type?: string;
+		color?: string;
+		description?: string;
+	}[];
 	timestamp: number;
 }
 
@@ -25,13 +35,20 @@ export interface EntityState {
 	id: string;
 	type: 'player' | 'object';
 	position: { x: number; y: number; z: number };
+	rotation: number;
 	distance: number;
+	walletAddress?: string;
+	name?: string;
+	isAgent?: boolean;
+	isGuest?: boolean;
 }
 
 export interface ChatMessage {
 	senderId: string;
+	senderName?: string;
 	content: string;
 	timestamp: number;
+	targetId?: string;
 }
 
 export interface AgentInterface {

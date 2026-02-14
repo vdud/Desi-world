@@ -5,19 +5,22 @@
 
 	import { isPlane } from '$lib/stores/commonStores';
 	import { T } from '@threlte/core';
+	import { interactivity } from '@threlte/extras';
 	import NetworkPlayer from './NetworkPlayer.svelte';
 	import { network } from '$lib/network/network.svelte';
+
+	interactivity();
 
 	import Ground from './models/Ground.svelte';
 	import ProximityLoader from './ProximityLoader.svelte';
 
 	const worldObjects = [
-		{
-			id: 'starting-room',
-			position: [0, 0, 0] as [number, number, number],
-			loader: () => import('./models/Starting-Room.svelte'),
-			priority: 10
-		},
+		// {
+		// 	id: 'starting-room',
+		// 	position: [0, 0, 0] as [number, number, number],
+		// 	loader: () => import('./models/Starting-Room.svelte'),
+		// 	priority: 10
+		// },
 		{
 			id: 'girl-dancing-1',
 			position: [5, 0, 5] as [number, number, number],

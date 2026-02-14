@@ -1,29 +1,50 @@
 <script lang="ts">
-	import { T } from '@threlte/core';
+	import { T, useTask, useThrelte } from '@threlte/core';
 	import { HTML } from '@threlte/extras';
-	import { onMount } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import type { Group } from 'three';
 
 	let { text } = $props();
-	let visible = $state(true);
+	let isVisible = $state(false);
+	let group = $state<Group>();
+	const { camera } = useThrelte();
 
-	onMount(() => {
-		const timer = setTimeout(() => {
-			visible = false;
-		}, 5000);
-		return () => clearTimeout(timer);
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	$effect(() => {
+		if (text && text.trim().length > 0) {
+			console.log(`[ChatBubble] New message received: "${text}"`);
+			isVisible = true;
+			if (timer) clearTimeout(timer);
+			timer = setTimeout(() => {
+				console.log(`[ChatBubble] Hiding message: "${text}"`);
+				isVisible = false;
+			}, 5000);
+		} else {
+			isVisible = false;
+			if (timer) clearTimeout(timer);
+		}
+		return () => {
+			if (timer) clearTimeout(timer);
+		};
+	});
+
+	useTask(() => {
+		if (group && $camera) {
+			group.lookAt($camera.position);
+		}
 	});
 </script>
 
-{#if visible}
-	<T.Group position={[0, 2.5, 0]}>
+<T.Group bind:ref={group} position={[0, 2.5, 0]}>
+	{#if isVisible}
 		<HTML transform>
 			<div class="bubble" transition:fade>
 				{text}
 			</div>
 		</HTML>
-	</T.Group>
-{/if}
+	{/if}
+</T.Group>
 
 <style>
 	.bubble {
@@ -37,6 +58,7 @@
 		pointer-events: none;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 		border: 1px solid rgba(255, 255, 255, 0.2);
+		position: relative;
 	}
 	/* Little arrow */
 	.bubble::after {

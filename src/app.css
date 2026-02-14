@@ -1,12 +1,17 @@
+@import 'tailwindcss';
 :root {
 	/* Dark Theme (Default) */
 	--bg-primary: #0a0a0a;
+	--bg-secondary: #1a1a1a;
 	--text-primary: #f0f0f0;
 	--text-secondary: #888888;
 	--accent-color: #e0e0e0;
 	--accent-hover: #ffffff;
 	--border-color: rgba(255, 255, 255, 0.1);
 	--noise-opacity: 0.05;
+
+	--text-primary-inverted: #000000;
+	--text-secondary-inverted: #888888;
 
 	--font-family: 'Inter', system-ui, -apple-system, sans-serif;
 	--font-serif: 'Times New Roman', serif;
@@ -20,7 +25,8 @@
 	--terminal-bg: #0c0c0c;
 	--terminal-header: #1a1a1a;
 	--terminal-text: #cccccc;
-	--terminal-accent: #4af626; /* Hacker Green */
+	--terminal-text-inverted: #cccccc;
+	--terminal-accent: #4af626;
 
 	color-scheme: light dark;
 }
@@ -29,8 +35,11 @@
 	:root {
 		/* Light Theme Overrides */
 		--bg-primary: #f4f4f5;
+		--bg-secondary: #18181b;
 		--text-primary: #18181b;
 		--text-secondary: #52525b;
+		--text-primary-inverted: #f4f4f5;
+		--text-secondary-inverted: #52525b;
 		--accent-color: #27272a;
 		--accent-hover: #000000;
 		--border-color: rgba(0, 0, 0, 0.1);
@@ -39,6 +48,7 @@
 		--terminal-bg: #1e1e1e;
 		--terminal-header: #2d2d2d;
 		--terminal-text: #e0e0e0;
+		--terminal-text-inverted: #e0e0e0;
 	}
 }
 

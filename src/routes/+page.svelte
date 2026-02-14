@@ -171,7 +171,7 @@
 									navigator.clipboard.writeText(`
 const API_KEY = '${apiKey}';
 const OPENROUTER_KEY = prompt('Enter OpenRouter Key (sk-or-...)');
-const MODEL = prompt('Enter Model ID', 'stepfun/step-3.5-flash:free');
+const MODEL = prompt('Enter Model ID', 'arcee-ai/trinity-large-preview:free');
 
 (async () => {
     console.log("🟡 Starting Agent Sequence v1.3...");

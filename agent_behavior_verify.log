@@ -1,0 +1,21 @@
+[dotenv@17.3.1] injecting env (2) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+🤖 Starting AI Agent with purpose: "Curious Explorer"
+🔄 HeadlessAgent Loop Starting...
+🤖 Agent Connected to PartyKit
+💓 Tick Heartbeat | Pos: 0.00,0.00 | Target: NO
+✅ Connected to Game Server
+🧪 FORCING MOVE TEST: 5, 5
+🚶 Agent setting target to 5, 5
+👀 nearbyEntities: [
+  {
+    "id": "11fc429e-627a-421d-845c-ae3bfbccab40",
+    "type": "player",
+    "position": {
+      "x": 5,
+      "y": 0,
+      "z": 5
+    },
+    "distance": 7.0710678118654755
+  }
+]
+🤔 Thinking...

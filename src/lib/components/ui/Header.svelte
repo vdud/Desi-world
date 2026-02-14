@@ -1,3 +1,4 @@
+<!-- src/lib/components/ui/Header.svelte -->
 <script lang="ts">
 	import ConnectWallet from '$lib/components/ui/ConnectWallet.svelte';
 	import { fade } from 'svelte/transition';
@@ -22,6 +23,7 @@
 	<div class="actions">
 		<a href="/about" class="nav-link">Manifesto</a>
 		<a href="/world" class="nav-link">The World</a>
+		<a href="/dashboard" class="nav-link">Dashboard</a>
 		<div class="wallet-wrapper">
 			<ConnectWallet />
 		</div>

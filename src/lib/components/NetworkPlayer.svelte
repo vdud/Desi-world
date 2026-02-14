@@ -5,20 +5,50 @@
 	import type * as THREE from 'three';
 	import Character from './Player/Character.svelte';
 	import { network, type PlayerState } from '$lib/network/network.svelte';
-	import { audioListener } from '$lib/stores/commonStores';
+	import { audioListener, chatTarget, isChatOpen } from '$lib/stores/commonStores';
 	import ChatBubble from './ChatBubble.svelte';
 
 	let props = $props<{ state: PlayerState }>();
 
-	// Interpolation logic could go here, for now we direct map
-	// To make it smooth, we could use a spring or lerp in useTask
-
+	// Interpolation logic
 	let currentX = $state(props.state.x);
 	let currentY = $state(props.state.y);
 	let currentZ = $state(props.state.z);
 	let currentRot = $state(props.state.rotation);
 
-	let stream = $derived(network.voiceStreams.get(props.state.id));
+	function handlePlayerClick(e: any) {
+		if (e && e.stopPropagation) e.stopPropagation();
+		console.log('Clicked on player:', props.state.id);
+		chatTarget.set(props.state.id);
+		isChatOpen.set(true);
+	}
+
+	let stream = $derived.by(() => {
+		return network.voiceStreams.get(props.state.id);
+	});
+
+	// Audio Reference
+	let audioRef: THREE.PositionalAudio | undefined = $state();
+
+	$effect(() => {
+		if (audioRef && stream && $audioListener) {
+			const tracks = stream.getAudioTracks();
+			if (tracks.length > 0) {
+				try {
+					audioRef.setMediaStreamSource(stream);
+					audioRef.setRefDistance(1);
+					audioRef.setMaxDistance(25);
+					audioRef.setVolume(2.0);
+
+					if (audioRef.context.state === 'suspended') {
+						audioRef.context.resume();
+					}
+				} catch (err) {
+					console.error(`[Audio Debug] Error connecting stream:`, err);
+				}
+			}
+		}
+	});
 
 	/*
 	 * Helper Action to set srcObject on Audio Element
@@ -38,8 +68,6 @@
 
 	useTask((delta) => {
 		const target = props.state;
-		// ...
-		// (keep existing interpolation logic)
 		const t = Math.min(10 * delta, 1);
 		currentX += (target.x - currentX) * t;
 		currentY += (target.y - currentY) * t;
@@ -53,21 +81,26 @@
 	});
 </script>
 
-```typescript
 <!-- 
   We use a Kinematic RigidBody for network players so they:
   1. Have collision (can block the local player)
   2. Don't fall due to local gravity (position is controlled by server/network)
 -->
-<T.Group position={[currentX, currentY, currentZ]} rotation.y={currentRot + Math.PI}>
+<T.Group
+	position={[currentX, currentY, currentZ]}
+	rotation.y={currentRot}
+	onclick={handlePlayerClick}
+>
 	{#if props.state.isAgent}
 		<Text
-			text="[BOT]"
-			position={[0, 2.6, 0]}
-			fontSize={0.3}
-			color="#ff00ff"
+			text={props.state.name || 'AI'}
+			position={[0, 2.8, 0]}
+			fontSize={0.5}
+			color="white"
 			anchorX="center"
 			anchorY="middle"
+			outlineWidth={0.02}
+			outlineColor="#000000"
 			billboard
 		/>
 	{/if}
@@ -81,35 +114,9 @@
 			distanceModel="linear"
 			panningModel="HRTF"
 			oncreate={(ref: THREE.PositionalAudio) => {
-				if (stream) {
-					const tracks = stream.getAudioTracks();
-
-					if (tracks.length > 0) {
-						ref.setMediaStreamSource(stream);
-						ref.setVolume(2.0); // Boost volume
-						// Ensure the context is running
-						if (ref.context.state === 'suspended') {
-							console.warn('   - AudioContext suspended! Attempting resume...');
-							ref.context.resume();
-						}
-					} else {
-						console.warn('   - No audio tracks found in stream!');
-					}
-				}
+				audioRef = ref;
 			}}
 		/>
-
-		<!-- FALLBACK / DEBUG AUDIO - Visible for testing -->
-		<div
-			style="position: absolute; top: 10px; left: 10px; z-index: 9999; background: rgba(0,0,0,0.8); color: white; padding: 10px; pointer-events: auto;"
-		>
-			<strong>Debug Audio: {props.state.id}</strong><br />
-			Stream Active: {stream.active}<br />
-			Tracks: {stream.getAudioTracks().length}<br />
-			<!-- Muted by default so it doesn't override spatial audio -->
-			<audio use:srcObject={stream} playsinline controls muted style="width: 200px; height: 30px;"
-			></audio>
-		</div>
 	{/if}
 
 	<!-- DEBUG INDICATOR: Red = No Audio Stream, Green = Audio Stream Active -->
@@ -120,9 +127,7 @@
 		/>
 	</T.Mesh>
 
-	{#if props.state.showChatBubble}
-		<ChatBubble text={props.state.lastChatMessage} />
-	{/if}
+	<ChatBubble text={props.state.lastChatMessage} />
 
 	<RigidBody type="kinematicPosition">
 		<CollisionGroups groups={[0]}>

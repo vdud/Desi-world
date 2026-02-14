@@ -13,6 +13,10 @@ export type PlayerState = {
 	metalness: number;
 	roughness: number;
 	isAgent?: boolean;
+	name?: string;
+	showChatBubble?: boolean;
+	lastChatMessage?: string;
+	walletAddress?: string;
 };
 
 import type {
@@ -106,22 +110,26 @@ export class NetworkManager implements AgentInterface {
 		// Handle Chat locally first (broadcast to others via PartyKit if needed)
 		if (command.type === 'chat') {
 			console.log('💬 Agent speaking:', command.payload.text);
-			// Broadcast to other players so they see the bubble
-			if (this.socket.readyState === this.socket.OPEN) {
-				this.socket.send(
-					JSON.stringify({
-						type: 'chat-message',
-						id: crypto.randomUUID(),
-						senderId: this.socket.id,
-						text: command.payload.text,
-						timestamp: Date.now()
-					})
-				);
-			}
+			this.sendChatMessage(command.payload.text);
 		}
 
 		if (this.agentCommandCallback) {
 			this.agentCommandCallback(command);
+		}
+	}
+
+	sendChatMessage(text: string, targetId?: string) {
+		if (this.socket.readyState === this.socket.OPEN) {
+			this.socket.send(
+				JSON.stringify({
+					type: 'chat-message',
+					id: crypto.randomUUID(),
+					senderId: this.socket.id,
+					text: text,
+					timestamp: Date.now(),
+					targetId
+				})
+			);
 		}
 	}
 
@@ -136,11 +144,14 @@ export class NetworkManager implements AgentInterface {
 					id: p.id,
 					type: 'player',
 					position: { x: p.x, y: p.y, z: p.z },
+					rotation: p.rotation || 0,
 					distance: dist
 				};
 			}),
 			chatLog: [], // Todo: Implement Chat
 			vision: this.vision,
+			marketListings: [], // Todo: Sync with actual listings if needed by BrowserAgent
+			obstacles: [], // Todo: Sync with known objects if needed by BrowserAgent
 			timestamp: Date.now()
 		};
 	}
@@ -173,18 +184,39 @@ export class NetworkManager implements AgentInterface {
 			const { id, data } = msg;
 			if (id === this.socket.id) return;
 
+			if (data.isAgent) {
+				// console.log(`[Client] Received Agent Update for ${id}:`, data.x, data.z);
+			}
+
 			if (!this.otherPlayers.has(id)) {
 				this.otherPlayers.set(id, { ...data, id });
 			} else {
 				const p = this.otherPlayers.get(id);
-				if (p) Object.assign(p, data);
+				// FORCE REACTIVITY: Create a NEW object instead of mutating
+				this.otherPlayers.set(id, { ...p, ...data });
 			}
-			// FORCE REACTIVITY
+			// FORCE REACTIVITY on the Map itself (Svelte 5 Runes with Maps can be tricky)
 			this.otherPlayers = new Map(this.otherPlayers);
 		} else if (msg.type === 'chat-message') {
 			// Incoming chat from another player (or agent)
 			const { id, senderId, text } = msg;
-			// Dispatch event for UI to pick up
+
+			// Update the sender's state to show the bubble
+			if (this.otherPlayers.has(senderId)) {
+				const p = this.otherPlayers.get(senderId)!;
+				this.otherPlayers.set(senderId, {
+					...p,
+					lastChatMessage: text,
+					showChatBubble: true
+				});
+				// Force reactivity
+				this.otherPlayers = new Map(this.otherPlayers);
+
+				// Auto-hide bubble after filtered time handled by component,
+				// but here we just set the state.
+			}
+
+			// Dispatch event for UI to pick up (optional now, but good for 2D UI)
 			window.dispatchEvent(
 				new CustomEvent('player-chat', {
 					detail: { senderId, text }
@@ -206,6 +238,31 @@ export class NetworkManager implements AgentInterface {
 				this.voiceStreams.delete(msg.id);
 				this.voiceStreams = new Map(this.voiceStreams);
 			}
+		} else if (msg.type === 'market-list-item') {
+			window.dispatchEvent(new CustomEvent('market-list-item', { detail: msg.listing }));
+		} else if (msg.type === 'market-buy-item') {
+			window.dispatchEvent(
+				new CustomEvent('market-buy-item', {
+					detail: { listingId: msg.listingId, buyerId: msg.buyerId }
+				})
+			);
+		} else if (msg.type === 'market-cancel-item') {
+			window.dispatchEvent(
+				new CustomEvent('market-cancel-item', { detail: { listingId: msg.listingId } })
+			);
+		} else if (msg.type === 'market-sync') {
+			window.dispatchEvent(new CustomEvent('market-sync', { detail: { listings: msg.listings } }));
+		} else if (msg.type === 'agent-debug-log') {
+			window.dispatchEvent(
+				new CustomEvent('agent-debug-log', {
+					detail: { 
+						agentId: msg.agentId, 
+						socketId: msg.socketId,
+						message: msg.message, 
+						timestamp: msg.timestamp 
+					}
+				})
+			);
 		} else if (msg.type === 'voice-signal') {
 			this.handleSignal(msg.senderId, msg.signal);
 		} else if (msg.type === 'voice-ready') {
@@ -303,11 +360,19 @@ export class NetworkManager implements AgentInterface {
 	}
 
 	cleanupPeer(targetId: string) {
+		console.log(`[VoiceDebug] 🧹 Cleaning up peer ${targetId}`);
 		if (this.peers.has(targetId)) {
 			this.peers.get(targetId)?.close();
 			this.peers.delete(targetId);
 		}
 		if (this.voiceStreams.has(targetId)) {
+			const stream = this.voiceStreams.get(targetId);
+			if (stream) {
+				stream.getTracks().forEach((track) => {
+					console.log(`[VoiceDebug] 🛑 Stopping track for ${targetId}:`, track.kind);
+					track.stop();
+				});
+			}
 			this.voiceStreams.delete(targetId);
 			// Force reactivity update
 			this.voiceStreams = new Map(this.voiceStreams);
@@ -477,6 +542,37 @@ export class NetworkManager implements AgentInterface {
 				type: 'voice-signal',
 				targetId,
 				signal
+			})
+		);
+	}
+
+	// --- Marketplace Network Methods ---
+	sendMarketListing(listing: any) {
+		if (this.socket.readyState !== this.socket.OPEN) return;
+		this.socket.send(
+			JSON.stringify({
+				type: 'market-list-item',
+				listing
+			})
+		);
+	}
+
+	sendMarketBuy(listingId: string) {
+		if (!this.socket) return;
+		this.socket.send(
+			JSON.stringify({
+				type: 'market-buy-item',
+				listingId
+			})
+		);
+	}
+
+	sendMarketCancel(listingId: string) {
+		if (!this.socket) return;
+		this.socket.send(
+			JSON.stringify({
+				type: 'market-cancel-item',
+				listingId
 			})
 		);
 	}

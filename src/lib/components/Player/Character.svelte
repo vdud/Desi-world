@@ -233,11 +233,6 @@
 			const z = movement.forward - movement.backward;
 
 			if (x !== 0 || z !== 0) {
-				// Calculate angle: 0 is forward (+Z), Math.PI is backward (-Z)
-				// atan2(x, z) gives angle from Z axis
-				// We need to invert X because in Three.js/Right-hand rule:
-				// +X is Left, -X is Right? No, +X is Right.
-				// Let's test standard: atan2(x, z)
 				targetRotation = Math.atan2(x, z);
 			}
 
