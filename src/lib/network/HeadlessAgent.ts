@@ -1,6 +1,6 @@
 import PartySocket from 'partysocket';
 import { WebSocket } from 'ws';
-import crypto from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import type {
 	AgentCommand,
 	AgentObservation,
@@ -347,7 +347,7 @@ export class HeadlessAgent {
 		this.socket.send(
 			JSON.stringify({
 				type: 'chat-message',
-				id: crypto.randomUUID(),
+				id: randomUUID(),
 				senderId: this.socket.id,
 				text: message,
 				timestamp: Date.now()

@@ -71,6 +71,7 @@ async function main() {
 	console.log(`[Agent] Initializing "${name}"...`);
 	console.log(`[Agent] ID: ${agentId}`);
 	console.log(`[Agent] Target Host: ${host}`);
+	console.log(`[Agent] Version: 1.0.1 (Sync Check: ${new Date().toISOString()})`);
 
 	const agent = new HeadlessAgent(host, room, name, ownerAddress, agentId);
 
