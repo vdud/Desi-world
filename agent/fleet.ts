@@ -50,8 +50,6 @@ app.post('/agent/start', (req, res) => {
 		return res.status(409).json({ error: 'Agent already running' });
 	}
 
-	console.log(`[Fleet] Starting agent ${name} (Owner: ${owner || 'None'})...`);
-
 	// Spawn the agent process
 	// We use 'npx tsx agent/main.ts'
 	const env = {
@@ -62,6 +60,10 @@ app.post('/agent/start', (req, res) => {
 		AGENT_BEHAVIOUR: behaviour || 'Neutral',
 		AGENT_OWNER: owner || '' // Pass owner wallet address
 	};
+
+	const partyHost = env.NEXT_PUBLIC_PARTYKIT_HOST || 'antigravity-server.vdud.partykit.dev';
+	console.log(`[Fleet] Starting agent ${name} (Owner: ${owner || 'None'})`);
+	console.log(`[Fleet] Target PartyKit Host: ${partyHost}`);
 
 	// Use direct path to tsx to avoid npx wrapper signal issues
 	const tsxPath = path.join(process.cwd(), 'node_modules', '.bin', 'tsx');

@@ -38,7 +38,9 @@
 		agentManager.stopAgent(id);
 	}
 
-	function handleDelete(id: string) {
+	function handleDelete(e: MouseEvent, id: string) {
+		e.preventDefault();
+		e.stopPropagation();
 		if (confirm('Are you sure you want to delete this agent?')) {
 			agentManager.removeAgent(id);
 			if (selectedAgentId === id) selectedAgentId = null;
@@ -328,8 +330,9 @@
 										{/if}
 
 										<button
+											type="button"
 											class="p-2.5 bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors cursor-pointer"
-											onclick={() => handleDelete(agent.id)}
+											onclick={(e) => handleDelete(e, agent.id)}
 											title="Delete Agent"
 										>
 											<svg

@@ -58,8 +58,7 @@ export class HeadlessAgent {
 			protocol:
 				host.includes('localhost') ||
 				host.includes('127.0.0.1') ||
-				host.includes('host.docker.internal') ||
-				host.includes('partykit')
+				host.includes('host.docker.internal')
 					? 'ws'
 					: 'wss'
 		});

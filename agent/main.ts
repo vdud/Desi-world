@@ -64,66 +64,74 @@ async function main() {
 		fs.writeFileSync(memoryFile, memory);
 	}
 
-	const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST || 'localhost:1999';
+	const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST || 'antigravity-server.vdud.partykit.dev';
 	const room = 'main-room';
+	const agentId = process.env.AGENT_ID || 'unknown-id';
 
-	console.log(
-		`🤖 Starting AI Agent "${name}" with purpose: "${purpose}", behaviour: "${behaviour}"`
-	);
-	console.log(`🔌 Connecting to ${host}/${room}...`);
+	console.log(`[Agent] Initializing "${name}"...`);
+	console.log(`[Agent] ID: ${agentId}`);
+	console.log(`[Agent] Target Host: ${host}`);
 
 	const agent = new HeadlessAgent(host, room, name, ownerAddress);
-
-	// Wait for connection
-	await new Promise((resolve) => setTimeout(resolve, 2000));
-	console.log('✅ Connected to Game Server');
 
 	// --- LOG OVERRIDE FOR DASHBOARD STREAMING ---
 	const originalLog = console.log;
 	const originalError = console.error;
 
-	console.log = (...args) => {
-		originalLog(...args);
+	const streamToDashboard = (type: string, args: any[]) => {
 		try {
-			if (agent.socket.readyState === 1) {
-				// OPEN
-				const msg = args
-					.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a)))
-					.join(' ');
+			const msg = args
+				.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a)))
+				.join(' ');
+			
+			if (agent.socket) {
 				agent.socket.send(
 					JSON.stringify({
 						type: 'agent-debug-log',
-						agentId: process.env.AGENT_ID || agent.socket.id,
-						message: msg,
+						agentId: agentId, // Always use the UUID from Fleet
+						message: type === 'error' ? `[ERROR] ${msg}` : msg,
 						timestamp: Date.now()
 					})
 				);
 			}
 		} catch (e) {
-			// Ignore logging errors to prevent loops
+			// Ignore
 		}
+	};
+
+	console.log = (...args) => {
+		originalLog(...args);
+		streamToDashboard('log', args);
 	};
 
 	console.error = (...args) => {
 		originalError(...args);
-		try {
-			if (agent.socket.readyState === 1) {
-				// OPEN
-				const msg = args
-					.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a)))
-					.join(' ');
-				agent.socket.send(
-					JSON.stringify({
-						type: 'agent-debug-log',
-						agentId: process.env.AGENT_ID || agent.socket.id,
-						message: `[ERROR] ${msg}`,
-						timestamp: Date.now()
-					})
-				);
-			}
-		} catch (e) {}
+		streamToDashboard('error', args);
 	};
 	// --------------------------------------------
+
+	console.log(`🔌 Attempting to connect to ${host}/${room}...`);
+
+	// Wait for connection with a timeout log
+	const connectionTimeout = setTimeout(() => {
+		console.error(`⚠️ Connection taking a long time... is ${host} reachable?`);
+	}, 5000);
+
+	await new Promise((resolve) => {
+		const check = () => {
+			if (agent.socket.readyState === 1) {
+				clearTimeout(connectionTimeout);
+				resolve(true);
+			} else {
+				setTimeout(check, 100);
+			}
+		};
+		check();
+	});
+
+	console.log('✅ Connected to Game Server. Starting logic loop...');
+
+
 
 	if (shouldSeed) {
 		console.log('🌱 Seeding World Objects...');
