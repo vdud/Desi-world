@@ -13,23 +13,21 @@
 
 	$effect(() => {
 		if (text && text.trim().length > 0 && timestamp) {
-			console.log(`[ChatBubble] New message received: "${text}" at ${timestamp}`);
-			isVisible = false; // Briefly hide to trigger re-render if it was already visible
-			
-			// We use a microtask or a short timeout to toggle it back to true
-			// so the #if block actually sees a change.
-			setTimeout(() => {
-				isVisible = true;
-				if (timer) clearTimeout(timer);
-				timer = setTimeout(() => {
-					console.log(`[ChatBubble] Hiding message: "${text}"`);
-					isVisible = false;
-				}, 5000);
-			}, 50);
-		} else {
-			isVisible = false;
+			// Clear any existing timer to prevent premature hiding
 			if (timer) clearTimeout(timer);
+
+			// Show immediately
+			isVisible = true;
+
+			// Set timer to hide
+			timer = setTimeout(() => {
+				isVisible = false;
+			}, 5000);
 		}
+		// No return cleanup needed for the timer here as we handle it on next run or destroy
+	});
+
+	$effect.root(() => {
 		return () => {
 			if (timer) clearTimeout(timer);
 		};
@@ -60,7 +58,11 @@
 		border-radius: 12px;
 		font-family: 'Inter', sans-serif;
 		font-size: 14px;
-		white-space: nowrap;
+		font-size: 14px;
+		white-space: normal; /* Allow wrapping */
+		max-width: 250px; /* Limit width so it doesn't span across screen */
+		line-height: 1.4;
+		text-align: center;
 		pointer-events: none;
 		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 		border: 1px solid rgba(255, 255, 255, 0.2);

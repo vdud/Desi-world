@@ -72,7 +72,7 @@ async function main() {
 	);
 	console.log(`🔌 Connecting to ${host}/${room}...`);
 
-	const agent = new HeadlessAgent(host, room, name);
+	const agent = new HeadlessAgent(host, room, name, ownerAddress);
 
 	// Wait for connection
 	await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -221,7 +221,7 @@ async function main() {
     
     Available Actions (Execute exactly one per turn):
     - MOVE: "MOVE x z" (e.g., "MOVE 5 -5") - Move to specific ABSOLUTE coordinates. Range is roughly -100 to 100 for both X and Z.
-    - FOLLOW: "FOLLOW id" (e.g., "FOLLOW player-123") - Continuously follow a specific player or entity. Use this when asked to "come with me" or "follow me".
+    - FOLLOW: "FOLLOW id" (e.g., "FOLLOW player-123" or "FOLLOW car-1") - Continuously follow a specific player OR object. Use this when asked to "follow me" or "follow the [object]".
     - STOP: "STOP" - Stop moving or following.
     - SAY: "SAY message" (e.g., "SAY Hello world!") - Chat with nearby players.
     - WAIT: "WAIT" - Stay still for a moment.
@@ -359,7 +359,10 @@ async function main() {
 											type: o.type,
 											color: o.color,
 											position: { x: o.position.x, z: o.position.z },
-											rotation: o.rotation !== undefined ? Number(o.rotation.toFixed(2)) : 0,
+											rotation:
+												(o as any).rotation !== undefined
+													? Number((o as any).rotation.toFixed(2))
+													: 0,
 											radius: o.radius || 1.0,
 											description: o.description,
 											distance: Number(o.distance.toFixed(1))
@@ -396,7 +399,7 @@ async function main() {
                  Target X = Player X + sin(Player Rot) * 1.5
                  Target Z = Player Z + cos(Player Rot) * 1.5
                - Use the 'MOVE x z' command with these coordinates.
-            - **FOLLOWING**: If asked to "come with me", "follow", or "come here", use the 'FOLLOW <id>' command with the speaker's ID.
+            - **FOLLOWING**: If asked to "follow me", use 'FOLLOW <speakerId>'. If asked to "follow the [object]", use 'FOLLOW <objectId>'.
             - **SPATIAL COMMANDS**: 
                - If asked to "go to the [object]" or "stand in front of the [object]", LOOK at "Nearby Obstacles".
                - **CALCULATING POSITIONS**:
@@ -411,7 +414,7 @@ async function main() {
                  2. Move to it using the calculation above.
                  3. AFTER moving (or while moving), SAY: "Is this the [object] you meant?"
             ${
-							ownerAddress && ownerDistance > 5
+							ownerAddress && ownerDistance > 5 && !agent.followTargetId
 								? `⚠️ OWNER IS TOO FAR (${ownerDistance.toFixed(1)}m)! You should MOVE towards them at ${JSON.stringify(ownerPosition)} or use FOLLOW.`
 								: ''
 						}
@@ -425,6 +428,11 @@ async function main() {
 								? '💡 Nothing is happening nearby. You should MOVE to a random location (e.g., MOVE 10 -10) to explore and find people!'
 								: ''
 						}
+            ${
+							agent.followTargetId
+								? `🔒 STATUS: FOLLOWING (${agent.followTargetId}). Movement is AUTOMATIC. DO NOT issue MOVE commands. Only use SAY (to talk) or STOP (to quit following).`
+								: ''
+						}
 
             What do you do?
             `;
@@ -433,7 +441,7 @@ async function main() {
 				`👀 nearbyEntities: ${observation.nearbyEntities.length} | obstacles: ${observation.obstacles?.length || 0} | chatLog: ${observation.chatLog.length}`
 			);
 			console.log(`🤔 Thinking (Model: ${MODEL})...`);
-			console.log(`📝 Full User Prompt: ${userPrompt}`); 
+			console.log(`📝 Full User Prompt: ${userPrompt}`);
 
 			// Heuristic: Force move if stuck talking
 			let action: string = 'WAIT';
@@ -473,8 +481,8 @@ async function main() {
 								jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
 							} else if (jsonStr.includes('```')) {
 								jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
-							} 
-							
+							}
+
 							// 3. Find the first '{' and last '}' as a last resort
 							if (!jsonStr.startsWith('{')) {
 								const start = jsonStr.indexOf('{');
@@ -521,13 +529,21 @@ async function main() {
 				lastAction = action;
 
 				if (action.startsWith('MOVE')) {
-					consecutiveSayCount = 0; // Moving resets say count
-					agent.followTargetId = null; // Stop following if manual move
-					const parts = action.split(' ');
-					const x = parseFloat(parts[1]);
-					const z = parseFloat(parts[2]);
-					if (!isNaN(x) && !isNaN(z)) {
-						agent.moveTo(x, z);
+					// Check if we are currently following someone
+					if (agent.followTargetId) {
+						console.log(
+							`⚠️ Ignoring manual MOVE command because agent is in FOLLOW mode (Target: ${agent.followTargetId}). Use STOP to break follow.`
+						);
+						// Do nothing, treat as WAIT, so we don't clear followTargetId
+					} else {
+						consecutiveSayCount = 0; // Moving resets say count
+						agent.followTargetId = null; // Stop following if manual move
+						const parts = action.split(' ');
+						const x = parseFloat(parts[1]);
+						const z = parseFloat(parts[2]);
+						if (!isNaN(x) && !isNaN(z)) {
+							agent.moveTo(x, z);
+						}
 					}
 				} else if (action.startsWith('FOLLOW')) {
 					consecutiveSayCount = 0;

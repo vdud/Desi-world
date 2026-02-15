@@ -1,5 +1,6 @@
 import { browser } from '$app/environment';
 import { network } from '$lib/network/network.svelte';
+import { web3 } from '$lib/web3/web3.svelte';
 
 export interface AgentConfig {
 	id: string;
@@ -17,16 +18,15 @@ export interface WorldAgent {
 	isLocal: boolean;
 	purpose?: string;
 	logs: string[];
+	owner?: string;
 }
 
-const FLEET_URL = browser && window.location.hostname === 'localhost' 
-	? 'http://localhost:3000' 
-	: '/api/fleet';
+const FLEET_URL = '/api/fleet';
 
 class AgentManagerState {
 	agents = $state<AgentConfig[]>([]);
 	worldAgents = $state<WorldAgent[]>([]);
-	
+
 	// Cache for logs of remote agents
 	private remoteLogs: Map<string, string[]> = new Map();
 
@@ -35,21 +35,21 @@ class AgentManagerState {
 			this.loadFromStorage();
 			this.syncWithFleet(); // Restore state from server
 			this.startDiscovery();
-			
+
 			// Listen for remote logs
 			window.addEventListener('agent-debug-log', (e: any) => {
 				const { agentId, socketId, message, timestamp } = e.detail;
 				const timeStr = new Date(timestamp).toLocaleTimeString();
 				const logEntry = `[${timeStr}] ${message}`;
-				
+
 				// 1. Update World Agents (Match by SocketID)
 				if (socketId) {
 					if (!this.remoteLogs.has(socketId)) this.remoteLogs.set(socketId, []);
 					const logs = this.remoteLogs.get(socketId)!;
 					logs.push(logEntry);
 					if (logs.length > 50) logs.shift();
-					
-					const worldIdx = this.worldAgents.findIndex(wa => wa.id === socketId);
+
+					const worldIdx = this.worldAgents.findIndex((wa) => wa.id === socketId);
 					if (worldIdx !== -1) {
 						this.worldAgents[worldIdx].logs = [...logs];
 					}
@@ -57,7 +57,7 @@ class AgentManagerState {
 
 				// 2. Update Local Agents (Match by UUID = agentId)
 				if (agentId) {
-					const localIdx = this.agents.findIndex(a => a.id === agentId);
+					const localIdx = this.agents.findIndex((a) => a.id === agentId);
 					if (localIdx !== -1) {
 						const currentLogs = this.agents[localIdx].logs;
 						if (currentLogs.length > 50) currentLogs.shift();
@@ -72,13 +72,43 @@ class AgentManagerState {
 		try {
 			const res = await fetch(`${FLEET_URL}/agents`);
 			if (res.ok) {
-				const runningAgents = await res.json();
-				// runningAgents is [{ id, name, uptime }]
-				
-				// Update local status
-				this.agents.forEach(agent => {
-					const isRunning = runningAgents.some((ra: any) => ra.id === agent.id);
-					agent.status = isRunning ? 'running' : 'stopped';
+				const runningAgents: any[] = await res.json();
+				// runningAgents is [{ id, name, uptime, owner? }]
+
+				const myAddress = web3.address?.toLowerCase();
+
+				// 1. Update status of known agents
+				this.agents.forEach((agent) => {
+					const remote = runningAgents.find((ra) => ra.id === agent.id);
+					agent.status = remote ? 'running' : 'stopped';
+				});
+
+				// 2. Manage Orphan/Unknown Agents
+				runningAgents.forEach((ra) => {
+					// Rule: If owner is unknown, DELETE THEM.
+					if (!ra.owner) {
+						console.warn(`[AgentManager] Found agent ${ra.name} with NO OWNER. Terminating...`);
+						this.stopAgent(ra.id); // This will now work even if not in local list
+						return;
+					}
+
+					// 3. Adopt agents owned by me matches
+					if (myAddress && ra.owner.toLowerCase() === myAddress) {
+						const exists = this.agents.some((a) => a.id === ra.id);
+						if (!exists) {
+							console.log(`[AgentManager] Adopting orphan agent: ${ra.name}`);
+							// We don't have the full config from fleet (purpose/behaviour are not returned yet, but we can default or fetch if we improved fleet API further)
+							// For now, we add them with basic info so they appear in the dashboard.
+							this.addAgent({
+								id: ra.id,
+								name: ra.name,
+								purpose: 'Recovered from Fleet', // Placeholder as fleet doesn't return this yet
+								behaviour: 'Neutral',
+								status: 'running',
+								logs: []
+							});
+						}
+					}
 				});
 			}
 		} catch (e) {
@@ -91,17 +121,20 @@ class AgentManagerState {
 			if (!network || !network.otherPlayers) return;
 
 			const discovered: WorldAgent[] = [];
-			
+
 			network.otherPlayers.forEach((p, id) => {
 				if (p.isAgent) {
 					const logs = this.remoteLogs.get(id) || [];
-					
+					const agentOwner = (p as any).walletAddress?.toLowerCase();
+					const myAddress = web3.address?.toLowerCase();
+
 					discovered.push({
 						id,
 						name: p.name || 'Unknown Agent',
 						position: { x: p.x, y: p.y, z: p.z },
-						isLocal: false, // We can't easily know if it's "ours" without ID matching
+						isLocal: !!(agentOwner && myAddress && agentOwner === myAddress),
 						purpose: (p as any).agentPurpose,
+						owner: agentOwner || 'Unknown',
 						logs: logs
 					});
 				}
@@ -142,7 +175,7 @@ class AgentManagerState {
 
 	addAgent(config: Partial<AgentConfig>) {
 		const newAgent: AgentConfig = {
-			id: crypto.randomUUID(),
+			id: config.id || crypto.randomUUID(),
 			name: config.name || 'New Agent',
 			purpose: config.purpose || 'To explore',
 			behaviour: config.behaviour || 'Neutral',
@@ -172,7 +205,8 @@ class AgentManagerState {
 					id: agent.id,
 					name: agent.name,
 					purpose: agent.purpose,
-					behaviour: agent.behaviour
+					behaviour: agent.behaviour,
+					owner: web3.address // Pass the current wallet address as owner
 				})
 			});
 
@@ -190,7 +224,7 @@ class AgentManagerState {
 
 	async stopAgent(id: string) {
 		const agentIndex = this.agents.findIndex((a) => a.id === id);
-		if (agentIndex === -1) return;
+		// Note: We might be stopping an orphan agent not in our list, so continue even if index is -1
 
 		try {
 			await fetch(`${FLEET_URL}/agent/stop`, {
@@ -198,9 +232,13 @@ class AgentManagerState {
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ id })
 			});
-			
-			this.agents[agentIndex].status = 'stopped';
-			this.addLog(id, '🛑 Stop command sent to Fleet.');
+
+			if (agentIndex !== -1) {
+				this.agents[agentIndex].status = 'stopped';
+				this.addLog(id, '🛑 Stop command sent to Fleet.');
+			} else {
+				console.log(`[AgentManager] Stopped remote/orphan agent ${id}`);
+			}
 		} catch (e) {
 			console.error('Stop error', e);
 		}

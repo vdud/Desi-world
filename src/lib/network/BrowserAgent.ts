@@ -1,10 +1,5 @@
 import PartySocket from 'partysocket';
-import type {
-	AgentObservation,
-	AgentSelfState,
-	EntityState,
-	ChatMessage
-} from './AgentProtocol';
+import type { AgentObservation, AgentSelfState, EntityState, ChatMessage } from './AgentProtocol';
 
 export class BrowserAgent {
 	socket: PartySocket;
@@ -19,7 +14,7 @@ export class BrowserAgent {
 	targetPosition: { x: number; y: number; z: number } | null = null;
 	rotation: number = 0;
 	movement = { forward: 0, backward: 0, left: 0, right: 0, up: 0 };
-	
+
 	// Behavior State
 	followTargetId: string | null = null;
 
@@ -51,7 +46,7 @@ export class BrowserAgent {
 		this.name = name;
 		this.purpose = purpose;
 		this.behaviour = behaviour;
-		
+
 		this.socket = new PartySocket({
 			host,
 			room
@@ -119,12 +114,12 @@ export class BrowserAgent {
 				// Update target position to be slightly offset from player (so we don't merge into them)
 				// aim for 1.5m away
 				this.targetPosition = { x: targetPlayer.x, y: targetPlayer.y, z: targetPlayer.z };
-				
+
 				// Stop if close enough (prevent jitter)
 				const dx = this.targetPosition.x - this.position.x;
 				const dz = this.targetPosition.z - this.position.z;
 				const dist = Math.sqrt(dx * dx + dz * dz);
-				
+
 				if (dist < 2.0) {
 					this.targetPosition = null; // Stop moving
 				}
@@ -132,14 +127,14 @@ export class BrowserAgent {
 				// Player lost/left
 				this.followTargetId = null;
 				this.targetPosition = null;
-				this.log("I lost sight of who I was following.");
+				this.log('I lost sight of who I was following.');
 			}
 		}
 
 		let moved = false;
 
 		// --- MOVEMENT LOGIC (Simple AI) ---
-		
+
 		// If no target, maybe pick a random one?
 		// Simple Random Walk
 		if (!this.targetPosition && Math.random() < 0.01 && !this.followTargetId) {
@@ -172,7 +167,9 @@ export class BrowserAgent {
 				// Arrived
 				this.position.x = this.targetPosition.x;
 				this.position.z = this.targetPosition.z;
-				this.log(`📍 Arrived at target: ${this.position.x.toFixed(1)}, ${this.position.z.toFixed(1)}`);
+				this.log(
+					`📍 Arrived at target: ${this.position.x.toFixed(1)}, ${this.position.z.toFixed(1)}`
+				);
 				this.targetPosition = null;
 				this.movement.forward = 0.0;
 				moved = true; // Send final update
@@ -223,11 +220,24 @@ export class BrowserAgent {
 			this.log(`Player joined: ${msg.id}`);
 		} else if (msg.type === 'chat-message') {
 			const { senderId, text, timestamp, targetId } = msg;
+
+			// CHECK PROXIMITY
+			const sender = this.otherPlayers.get(senderId);
+			if (sender) {
+				const dx = sender.x - this.position.x;
+				const dz = sender.z - this.position.z;
+				const dist = Math.sqrt(dx * dx + dz * dz);
+				if (dist > 20) {
+					// We just ignore it silently for browser agent or log it
+					return;
+				}
+			}
+
 			const senderName =
 				senderId === this.socket.id
 					? this.name
 					: this.otherPlayers.get(senderId)?.name || 'Unknown';
-			
+
 			this.chatLog.push({ senderId, content: text, timestamp, senderName, targetId });
 			if (this.chatLog.length > 50) this.chatLog.shift();
 
@@ -238,14 +248,17 @@ export class BrowserAgent {
 			}
 
 			// --- BASIC COMMAND PARSING (SIMPLE AGENT) ---
-			// Note: This is a fallback for the browser-based agent. 
+			// Note: This is a fallback for the browser-based agent.
 			// For complex tasks, use the Headless Agent (npm run agent:smart).
-			
+
 			const lowerText = text.toLowerCase();
 			const isDirectlyAddressed = targetId === this.socket.id;
 			const isNameMentioned = lowerText.includes(this.name.toLowerCase());
 
-			if ((lowerText.includes('follow me') || lowerText.includes('come with me')) && (isNameMentioned || isDirectlyAddressed)) {
+			if (
+				(lowerText.includes('follow me') || lowerText.includes('come with me')) &&
+				(isNameMentioned || isDirectlyAddressed)
+			) {
 				if (senderId !== this.socket.id) {
 					this.log(`[SimpleBot] Received command 'follow me'. Engaging follow mode.`);
 					this.followTargetId = senderId;
@@ -270,7 +283,6 @@ export class BrowserAgent {
 				}, 1000);
 			}
 			*/
-
 		} else if (msg.type === 'market-sync') {
 			this.marketListings = msg.listings;
 		}
@@ -312,7 +324,7 @@ export class BrowserAgent {
 					isAgent: true,
 					agentPurpose: this.purpose,
 					character: 'anon',
-					color: '#00ff00', // Green for Agents
+					color: '#00ff00' // Green for Agents
 				}
 			})
 		);

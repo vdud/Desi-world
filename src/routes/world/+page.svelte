@@ -29,7 +29,7 @@
 
 <style>
 	.page-content {
-		padding-top: 4rem;
+		padding-top: 8rem;
 	}
 
 	h1 {

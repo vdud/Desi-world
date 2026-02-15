@@ -1,6 +1,6 @@
 import PartySocket from 'partysocket';
 import { WebSocket } from 'ws';
-import { crypto } from 'node:crypto';
+import crypto from 'node:crypto';
 import type {
 	AgentCommand,
 	AgentObservation,
@@ -23,7 +23,7 @@ export class HeadlessAgent {
 	targetPosition: { x: number; y: number; z: number } | null = null;
 	rotation: number = 0;
 	movement = { forward: 0, backward: 0, left: 0, right: 0, up: 0 };
-	
+
 	// Behavior State
 	followTargetId: string | null = null;
 
@@ -42,19 +42,24 @@ export class HeadlessAgent {
 	tickInterval: NodeJS.Timeout | null = null;
 	lastTickTime: number = 0;
 
+	owner: string = '';
+
 	constructor(
 		host: string = 'localhost:1999',
 		room: string = 'main-room',
-		name: string = 'AI Agent'
+		name: string = 'AI Agent',
+		owner: string = ''
 	) {
 		this.name = name;
+		this.owner = owner;
 		this.socket = new PartySocket({
 			host,
 			room,
 			protocol:
 				host.includes('localhost') ||
 				host.includes('127.0.0.1') ||
-				host.includes('host.docker.internal')
+				host.includes('host.docker.internal') ||
+				host.includes('partykit')
 					? 'ws'
 					: 'wss'
 		});
@@ -108,26 +113,59 @@ export class HeadlessAgent {
 		if (!this.socket.id) return;
 
 		// --- FOLLOW LOGIC ---
+		// --- FOLLOW LOGIC ---
 		if (this.followTargetId) {
-			const targetPlayer = this.otherPlayers.get(this.followTargetId);
-			if (targetPlayer) {
-				// Update target position to be slightly offset from player (so we don't merge into them)
-				// aim for 1.5m away
-				this.targetPosition = { x: targetPlayer.x, y: targetPlayer.y, z: targetPlayer.z };
-				
+			let target = this.otherPlayers.get(this.followTargetId);
+			if (!target) {
+				target = this.knownObjects.get(this.followTargetId);
+			}
+
+			if (target) {
+				// Normalize position (objects might not have y)
+				const tx = target.x ?? target.position?.x ?? 0;
+				const ty = target.y ?? target.position?.y ?? 0;
+				const tz = target.z ?? target.position?.z ?? 0;
+
+				// Update target position to be slightly offset from target
+				this.targetPosition = { x: tx, y: ty, z: tz };
+
 				// Stop if close enough (prevent jitter)
 				const dx = this.targetPosition.x - this.position.x;
 				const dz = this.targetPosition.z - this.position.z;
 				const dist = Math.sqrt(dx * dx + dz * dz);
-				
+
 				if (dist < 2.0) {
-					this.targetPosition = null; // Stop moving
+					// We are close enough, but we DON'T set targetPosition to null permanently
+					// because the target might move. We just don't move *this frame*.
+					// Actually, our move logic below handles 'dist > 0.1'.
+					// We need a way to say "don't move close", but "keep watching".
+
+					// If we nullify targetPosition, we stop moving.
+					// But we need to keep updating targetPosition every tick in case target moves.
+
+					// So: If dist < 2.0, we just don't ACT on it in the movement block?
+					// Or we set targetPosition to current position to stop?
+
+					// Better approach: Let the movement logic handle the "stop at distance".
+
+					// But current movement logic moves until dist < 0.1.
+					// We want to stop at 2.0.
+
+					// Let's modify targetPosition to be the edge of the 2.0m radius?
+
+					// Simpler: If distance is < 2.0, we clear targetPosition for this tick ONLY,
+					// but next tick we re-evaluate.
+					this.targetPosition = null;
 				}
 			} else {
-				// Player lost/left
-				this.followTargetId = null;
+				// Target lost/left
+				console.warn(
+					`[HeadlessAgent] Follow target ${this.followTargetId} not found in players or objects.`
+				);
+				// We do NOT clear followTargetId immediately, maybe they are just out of range/syncing?
+				// But if they are gone-gone, we might want to give up eventually.
+				// For now, let's keep trying to find them.
 				this.targetPosition = null;
-				this.say("I lost sight of who I was following.");
 			}
 		}
 
@@ -223,6 +261,21 @@ export class HeadlessAgent {
 			console.log(`Player joined: ${msg.id}`);
 		} else if (msg.type === 'chat-message') {
 			const { senderId, text, timestamp, targetId } = msg;
+
+			// CHECK PROXIMITY
+			const sender = this.otherPlayers.get(senderId);
+			if (sender) {
+				const dx = sender.x - this.position.x;
+				const dz = sender.z - this.position.z;
+				const dist = Math.sqrt(dx * dx + dz * dz);
+				if (dist > 20) {
+					console.log(
+						`[HeadlessAgent] Ignoring message from ${senderId} (too far: ${dist.toFixed(1)}m)`
+					);
+					return;
+				}
+			}
+
 			const senderName =
 				senderId === this.socket.id
 					? this.name
@@ -252,7 +305,6 @@ export class HeadlessAgent {
 				}
 			}
 			*/
-
 		} else if (msg.type === 'market-sync') {
 			this.marketListings = msg.listings;
 		} else if (msg.type === 'market-list-item') {
@@ -323,7 +375,8 @@ export class HeadlessAgent {
 					character: 'anon',
 					color: '#ff0000',
 					metalness: 0.5,
-					roughness: 0.5
+					roughness: 0.5,
+					walletAddress: this.owner
 				}
 			})
 		);
@@ -337,22 +390,24 @@ export class HeadlessAgent {
 			velocity: { x: 0, y: 0, z: 0 }
 		};
 
-		const nearbyEntities: EntityState[] = Array.from(this.otherPlayers.values()).map((p) => {
-			const dist = Math.sqrt(
-				Math.pow(p.x - this.position.x, 2) + Math.pow(p.z - this.position.z, 2)
-			);
-			return {
-				id: p.id,
-				type: 'player',
-				position: { x: p.x, y: p.y, z: p.z },
-				rotation: p.rotation || 0,
-				distance: dist,
-				walletAddress: p.walletAddress,
-				name: p.name,
-				isAgent: p.isAgent,
-				isGuest: !p.walletAddress
-			};
-		});
+		const nearbyEntities: EntityState[] = Array.from(this.otherPlayers.values())
+			.map((p) => {
+				const dist = Math.sqrt(
+					Math.pow(p.x - this.position.x, 2) + Math.pow(p.z - this.position.z, 2)
+				);
+				return {
+					id: p.id,
+					type: 'player' as const,
+					position: { x: p.x, y: p.y, z: p.z },
+					rotation: p.rotation || 0,
+					distance: dist,
+					walletAddress: p.walletAddress,
+					name: p.name,
+					isAgent: p.isAgent,
+					isGuest: !p.walletAddress
+				};
+			})
+			.filter((e) => e.distance < 50); // Perception range for players
 
 		// Scan for obstacles (dynamic world objects)
 		const obstacles = Array.from(this.knownObjects.values())
@@ -361,9 +416,7 @@ export class HeadlessAgent {
 				const z = obs.position?.z ?? obs.z ?? 0;
 				const y = obs.position?.y ?? obs.y ?? 0;
 
-				const dist = Math.sqrt(
-					Math.pow(x - this.position.x, 2) + Math.pow(z - this.position.z, 2)
-				);
+				const dist = Math.sqrt(Math.pow(x - this.position.x, 2) + Math.pow(z - this.position.z, 2));
 				return {
 					id: obs.id, // e.g. "car-1", "tree-5"
 					position: { x, y, z },

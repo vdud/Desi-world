@@ -200,23 +200,22 @@ export class NetworkManager implements AgentInterface {
 			this.otherPlayers = new Map(this.otherPlayers);
 		} else if (msg.type === 'chat-message') {
 			// Incoming chat from another player (or agent)
-			const { id, senderId, text } = msg;
+			const { id, senderId, text } = msg; // msg structure: { type, id, senderId, text, timestamp, targetId }
 			console.log(`[NetworkManager] Chat received from ${senderId}: "${text}"`);
 
 			// Update the sender's state to show the bubble
 			if (this.otherPlayers.has(senderId)) {
 				const p = this.otherPlayers.get(senderId)!;
-				this.otherPlayers.set(senderId, {
+				const updatedPlayer = {
 					...p,
 					lastChatMessage: text,
 					lastMessageAt: Date.now(),
 					showChatBubble: true
-				});
+				};
+				this.otherPlayers.set(senderId, updatedPlayer);
+
 				// Force reactivity
 				this.otherPlayers = new Map(this.otherPlayers);
-
-				// Auto-hide bubble after filtered time handled by component,
-				// but here we just set the state.
 			}
 
 			// Dispatch event for UI to pick up (optional now, but good for 2D UI)
@@ -258,11 +257,11 @@ export class NetworkManager implements AgentInterface {
 		} else if (msg.type === 'agent-debug-log') {
 			window.dispatchEvent(
 				new CustomEvent('agent-debug-log', {
-					detail: { 
-						agentId: msg.agentId, 
+					detail: {
+						agentId: msg.agentId,
 						socketId: msg.socketId,
-						message: msg.message, 
-						timestamp: msg.timestamp 
+						message: msg.message,
+						timestamp: msg.timestamp
 					}
 				})
 			);
@@ -586,19 +585,37 @@ export class NetworkManager implements AgentInterface {
 			this.peers.get(targetId)?.close();
 			this.peers.delete(targetId);
 		}
+
+		// Validation: Is the peer still in our known players list?
+		if (!this.otherPlayers.has(targetId)) {
+			console.warn(`[VoiceDebug] 🛑 Cannot restart peer ${targetId}: Player not found.`);
+			return;
+		}
+
+		// Validation: Is the peer still in range?
+		const p = this.otherPlayers.get(targetId);
+		if (p) {
+			const myPos = this.myState.position;
+			const dist = Math.sqrt(Math.pow(p.x - myPos.x, 2) + Math.pow(p.z - myPos.z, 2));
+			if (dist > this.VOICE_CONNECT_DISTANCE) {
+				console.warn(
+					`[VoiceDebug] 🛑 Cannot restart peer ${targetId}: Out of range (${dist.toFixed(1)}m).`
+				);
+				return;
+			}
+		}
+
 		// Initiate new connection - force initiator to be true to jumpstart the process
 		// But wait -- if we both restart at same time, we might collide.
 		// stick to ID rule?
 		if (this.socket.id > targetId) {
 			this.createPeer(targetId, true);
 		} else {
-			// If we are the passive side, we should send a 'voice-ready' signal to prompt the other side
-			// to restart their connection to us.
-			// Actually, easiest is just to remove it and wait for `evaluateRenegotiation` or manually trigger it.
+			// If we are the passive side, send 'voice-ready' to prompt them
 			this.socket.send(
 				JSON.stringify({
 					type: 'voice-ready',
-					id: this.socket.id // Signal that I am ready
+					id: this.socket.id
 				})
 			);
 		}
