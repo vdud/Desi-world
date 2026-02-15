@@ -83,7 +83,7 @@ async function main() {
 			const msg = args
 				.map((a) => (typeof a === 'object' ? JSON.stringify(a) : String(a)))
 				.join(' ');
-			
+
 			if (agent.socket) {
 				agent.socket.send(
 					JSON.stringify({
@@ -130,8 +130,6 @@ async function main() {
 	});
 
 	console.log('✅ Connected to Game Server. Starting logic loop...');
-
-
 
 	if (shouldSeed) {
 		console.log('🌱 Seeding World Objects...');
@@ -445,89 +443,105 @@ async function main() {
             What do you do?
             `;
 
+			console.log(`📝 formattedChatLog:\n${formattedChatLog}`);
 			console.log(
 				`👀 nearbyEntities: ${observation.nearbyEntities.length} | obstacles: ${observation.obstacles?.length || 0} | chatLog: ${observation.chatLog.length}`
 			);
 			console.log(`🤔 Thinking (Model: ${MODEL})...`);
-			console.log(`📝 Full User Prompt: ${userPrompt}`);
+			// console.log(`📝 Full User Prompt: ${userPrompt}`); // Verify prompt structure if needed
 
 			// Heuristic: Force move if stuck talking
 			let action: string = 'WAIT';
+			let forceStop = false;
 
-			if (consecutiveSayCount >= 5) {
-				console.log('⚠️ Too much talking, forcing a move...');
-				// Generate random move
-				const rx = (Math.random() - 0.5) * 20;
-				const rz = (Math.random() - 0.5) * 20;
-				action = `MOVE ${rx.toFixed(1)} ${rz.toFixed(1)}`;
-			} else {
-				const startTime = Date.now();
-				try {
-					const completion = await openai.chat.completions.create(
-						{
-							model: MODEL,
-							messages: [
-								{ role: 'system', content: SYSTEM_PROMPT },
-								{ role: 'user', content: userPrompt }
-							],
-							max_tokens: 500
-						},
-						{ timeout: 60000 }
-					); // 60s timeout
+			// HEURISTIC: Check if user said "STOP" recently (last message)
+			if (observation.chatLog.length > 0) {
+				const lastMsg = observation.chatLog[observation.chatLog.length - 1];
+				const content = lastMsg.content.toLowerCase();
+				// Check if message is from owner or addressed to us
+				if (content.includes('stop') || content.includes('stay') || content.includes('wait')) {
+					console.log(`🛑 HEURISTIC: Detected STOP command in chat. Overriding LLM.`);
+					action = 'STOP';
+					forceStop = true;
+				}
+			}
 
-					console.log(`✅ API Response received in ${Date.now() - startTime}ms`);
+			if (!forceStop) {
+				if (consecutiveSayCount >= 5) {
+					console.log('⚠️ Too much talking, forcing a move...');
+					// Generate random move
+					const rx = (Math.random() - 0.5) * 20;
+					const rz = (Math.random() - 0.5) * 20;
+					action = `MOVE ${rx.toFixed(1)} ${rz.toFixed(1)}`;
+				} else {
+					const startTime = Date.now();
+					try {
+						const completion = await openai.chat.completions.create(
+							{
+								model: MODEL,
+								messages: [
+									{ role: 'system', content: SYSTEM_PROMPT },
+									{ role: 'user', content: userPrompt }
+								],
+								max_tokens: 500
+							},
+							{ timeout: 60000 }
+						); // 60s timeout
 
-					let content = completion.choices[0].message.content?.trim();
-					console.log(`🤖 Raw LLM Content: ${content}`);
-					if (content) {
-						try {
-							// 1. Try direct parse
-							let jsonStr = content;
+						console.log(`✅ API Response received in ${Date.now() - startTime}ms`);
 
-							// 2. Extract from markdown code blocks
-							if (jsonStr.includes('```json')) {
-								jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
-							} else if (jsonStr.includes('```')) {
-								jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
-							}
+						let content = completion.choices[0].message.content?.trim();
+						console.log(`🤖 Raw LLM Content: ${content}`);
+						if (content) {
+							try {
+								// 1. Try direct parse
+								let jsonStr = content;
 
-							// 3. Find the first '{' and last '}' as a last resort
-							if (!jsonStr.startsWith('{')) {
-								const start = jsonStr.indexOf('{');
-								const end = jsonStr.lastIndexOf('}');
-								if (start !== -1 && end !== -1) {
-									jsonStr = jsonStr.substring(start, end + 1);
+								// 2. Extract from markdown code blocks
+								if (jsonStr.includes('```json')) {
+									jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
+								} else if (jsonStr.includes('```')) {
+									jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
 								}
-							}
 
-							const parsed = JSON.parse(jsonStr);
-							action = parsed.action || 'WAIT';
-							const message = parsed.message;
-							const memoryUpdate = parsed.memory_update;
+								// 3. Find the first '{' and last '}' as a last resort
+								if (!jsonStr.startsWith('{')) {
+									const start = jsonStr.indexOf('{');
+									const end = jsonStr.lastIndexOf('}');
+									if (start !== -1 && end !== -1) {
+										jsonStr = jsonStr.substring(start, end + 1);
+									}
+								}
 
-							if (message) {
-								agent.say(message);
-								consecutiveSayCount++;
-							}
+								const parsed = JSON.parse(jsonStr);
+								action = parsed.action || 'WAIT';
+								const message = parsed.message;
+								const memoryUpdate = parsed.memory_update;
 
-							if (memoryUpdate) {
-								const timestamp = new Date().toISOString();
-								const entry = `\n[${timestamp}] ${memoryUpdate}`;
-								memory += entry;
-								fs.appendFileSync(memoryFile, entry);
-								console.log(`💾 Memory Updated: ${memoryUpdate}`);
+								if (message) {
+									agent.say(message);
+									consecutiveSayCount++;
+								}
+
+								if (memoryUpdate) {
+									const timestamp = new Date().toISOString();
+									const entry = `\n[${timestamp}] ${memoryUpdate}`;
+									memory += entry;
+									fs.appendFileSync(memoryFile, entry);
+									console.log(`💾 Memory Updated: ${memoryUpdate}`);
+								}
+							} catch (e) {
+								console.error('❌ Failed to parse JSON response. Content was:', content);
+								action = 'WAIT';
 							}
-						} catch (e) {
-							console.error('❌ Failed to parse JSON response. Content was:', content);
-							action = 'WAIT';
 						}
+					} catch (apiError: any) {
+						console.error(
+							`❌ API Error (${Date.now() - startTime}ms):`,
+							apiError.message || apiError
+						);
+						action = 'WAIT';
 					}
-				} catch (apiError: any) {
-					console.error(
-						`❌ API Error (${Date.now() - startTime}ms):`,
-						apiError.message || apiError
-					);
-					action = 'WAIT';
 				}
 			}
 

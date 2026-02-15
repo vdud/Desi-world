@@ -263,24 +263,34 @@ export class HeadlessAgent {
 		} else if (msg.type === 'chat-message') {
 			const { senderId, text, timestamp, targetId } = msg;
 
+			console.log(`[HeadlessAgent] 📩 Received chat-message from ${senderId}: "${text}"`);
+
 			// CHECK PROXIMITY
 			const sender = this.otherPlayers.get(senderId);
 			if (sender) {
 				const dx = sender.x - this.position.x;
 				const dz = sender.z - this.position.z;
 				const dist = Math.sqrt(dx * dx + dz * dz);
+				console.log(`[HeadlessAgent] 📏 Distance to sender ${senderId}: ${dist.toFixed(2)}m`);
+
 				if (dist > 20) {
 					console.log(
-						`[HeadlessAgent] Ignoring message from ${senderId} (too far: ${dist.toFixed(1)}m)`
+						`[HeadlessAgent] 🔇 Ignoring message from ${senderId} (too far: ${dist.toFixed(1)}m > 20m)`
 					);
 					return;
 				}
+			} else {
+				console.log(
+					`[HeadlessAgent] ⚠️ Sender ${senderId} not found in otherPlayers. Accepting message anyway.`
+				);
 			}
 
 			const senderName =
 				senderId === this.socket.id
 					? this.name
 					: this.otherPlayers.get(senderId)?.name || 'Unknown';
+
+			console.log(`[HeadlessAgent] ✅ Adding to chatLog: [${senderName}] ${text}`);
 			this.chatLog.push({ senderId, content: text, timestamp, senderName, targetId });
 			if (this.chatLog.length > 50) this.chatLog.shift();
 
