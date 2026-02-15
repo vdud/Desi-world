@@ -12,11 +12,6 @@ export default defineConfig({
 				changeOrigin: true,
 				ws: true,
 				secure: false
-			},
-			'/api/fleet': {
-				target: 'http://127.0.0.1:3000',
-				changeOrigin: true,
-				rewrite: (path) => path.replace(/^\/api\/fleet/, '')
 			}
 		}
 	}
