@@ -222,6 +222,8 @@ class AgentManagerState {
 		}
 
 		try {
+			console.log('FLEET_URL', FLEET_URL);
+			console.log('agent', agent);
 			const res = await fetch(`${FLEET_URL}/agent/start`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -244,6 +246,7 @@ class AgentManagerState {
 		} catch (e) {
 			this.addLog(id, `❌ Network error connecting to Fleet.`);
 		}
+		console.log('Agent started', agent);
 	}
 
 	async stopAgent(id: string, reason?: string) {

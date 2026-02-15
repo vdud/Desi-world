@@ -42,6 +42,8 @@ app.get('/agents', (req, res) => {
 app.post('/agent/start', (req, res) => {
 	const { id, name, purpose, behaviour, owner } = req.body;
 
+	console.log(`[Fleet] Starting agent ${name} (Owner: ${owner || 'None'})`);
+
 	if (!id || !name) {
 		return res.status(400).json({ error: 'Missing id or name' });
 	}

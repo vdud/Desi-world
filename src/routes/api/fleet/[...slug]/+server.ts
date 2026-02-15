@@ -1,11 +1,16 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-const FLEET_HOST = import.meta.env.PROD ? 'http://13.204.77.125:3000' : 'http://127.0.0.1:3000';
+const FLEET_HOST = import.meta.env.PROD ? 'http://127.0.0.1:3000' : 'http://13.204.77.125:3000';
 
 export const POST: RequestHandler = async ({ params, request, fetch }) => {
+	console.log(import.meta.env.PROD);
+	console.log('hehe');
 	const slug = params.slug; // e.g. "agent/start"
+	console.log('slug', slug);
 	const targetUrl = `${FLEET_HOST}/${slug}`;
+
+	console.log('FLEET_HOST', FLEET_HOST);
 
 	try {
 		console.log(`[FleetProxy] Proxying POST to ${targetUrl}`);
