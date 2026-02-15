@@ -72,7 +72,7 @@ async function main() {
 	console.log(`[Agent] ID: ${agentId}`);
 	console.log(`[Agent] Target Host: ${host}`);
 
-	const agent = new HeadlessAgent(host, room, name, ownerAddress);
+	const agent = new HeadlessAgent(host, room, name, ownerAddress, agentId);
 
 	// --- LOG OVERRIDE FOR DASHBOARD STREAMING ---
 	const originalLog = console.log;

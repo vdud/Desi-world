@@ -48,10 +48,12 @@ export class HeadlessAgent {
 		host: string = 'localhost:1999',
 		room: string = 'main-room',
 		name: string = 'AI Agent',
-		owner: string = ''
+		owner: string = '',
+		id: string = ''
 	) {
 		this.name = name;
 		this.owner = owner;
+		this.id = id;
 		this.socket = new PartySocket({
 			host,
 			room,
@@ -349,7 +351,7 @@ export class HeadlessAgent {
 		this.socket.send(
 			JSON.stringify({
 				type: 'agent-debug-log',
-				agentId: this.socket.id,
+				agentId: this.id || this.socket.id,
 				message: message,
 				timestamp: Date.now()
 			})

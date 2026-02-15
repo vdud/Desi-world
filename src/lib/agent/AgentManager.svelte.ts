@@ -39,6 +39,10 @@ class AgentManagerState {
 			// Listen for remote logs
 			window.addEventListener('agent-debug-log', (e: any) => {
 				const { agentId, socketId, message, timestamp } = e.detail;
+				
+				// DEBUG: See if logs are arriving in the browser console at all
+				console.log(`[AgentLog] Received: ${agentId} | Msg: ${message}`);
+
 				const timeStr = new Date(timestamp).toLocaleTimeString();
 				const logEntry = `[${timeStr}] ${message}`;
 
@@ -51,7 +55,11 @@ class AgentManagerState {
 
 					const worldIdx = this.worldAgents.findIndex((wa) => wa.id === socketId);
 					if (worldIdx !== -1) {
-						this.worldAgents[worldIdx].logs = [...logs];
+						// Create a new object for reactivity
+						this.worldAgents[worldIdx] = {
+							...this.worldAgents[worldIdx],
+							logs: [...logs]
+						};
 					}
 				}
 
@@ -60,8 +68,17 @@ class AgentManagerState {
 					const localIdx = this.agents.findIndex((a) => a.id === agentId);
 					if (localIdx !== -1) {
 						const currentLogs = this.agents[localIdx].logs;
-						if (currentLogs.length > 50) currentLogs.shift();
-						this.agents[localIdx].logs = [...currentLogs, logEntry];
+						const updatedLogs = [...currentLogs, logEntry].slice(-50);
+						
+						// FORCE REACTIVITY: Update the array reference and the object reference
+						const updatedAgent = { ...this.agents[localIdx], logs: updatedLogs };
+						const newAgents = [...this.agents];
+						newAgents[localIdx] = updatedAgent;
+						this.agents = newAgents;
+						
+						console.log(`[AgentLog] Updated Local Agent: ${updatedAgent.name} (Logs: ${updatedLogs.length})`);
+					} else {
+						console.warn(`[AgentLog] Received log for UNKNOWN agent ID: ${agentId}`);
 					}
 				}
 			});
