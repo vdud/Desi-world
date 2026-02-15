@@ -46,6 +46,10 @@ app.post('/agent/start', (req, res) => {
 		return res.status(400).json({ error: 'Missing id or name' });
 	}
 
+	if (!owner) {
+		return res.status(400).json({ error: 'Missing owner wallet address' });
+	}
+
 	if (agents.has(id)) {
 		return res.status(409).json({ error: 'Agent already running' });
 	}

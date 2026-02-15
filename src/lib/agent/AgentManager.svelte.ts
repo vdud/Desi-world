@@ -39,7 +39,7 @@ class AgentManagerState {
 			// Listen for remote logs
 			window.addEventListener('agent-debug-log', (e: any) => {
 				const { agentId, socketId, message, timestamp } = e.detail;
-				
+
 				// DEBUG: See if logs are arriving in the browser console at all
 				console.log(`[AgentLog] Received: ${agentId} | Msg: ${message}`);
 
@@ -69,14 +69,16 @@ class AgentManagerState {
 					if (localIdx !== -1) {
 						const currentLogs = this.agents[localIdx].logs;
 						const updatedLogs = [...currentLogs, logEntry].slice(-50);
-						
+
 						// FORCE REACTIVITY: Update the array reference and the object reference
 						const updatedAgent = { ...this.agents[localIdx], logs: updatedLogs };
 						const newAgents = [...this.agents];
 						newAgents[localIdx] = updatedAgent;
 						this.agents = newAgents;
-						
-						console.log(`[AgentLog] Updated Local Agent: ${updatedAgent.name} (Logs: ${updatedLogs.length})`);
+
+						console.log(
+							`[AgentLog] Updated Local Agent: ${updatedAgent.name} (Logs: ${updatedLogs.length})`
+						);
 					} else {
 						console.warn(`[AgentLog] Received log for UNKNOWN agent ID: ${agentId}`);
 					}
@@ -105,7 +107,7 @@ class AgentManagerState {
 					// Rule: If owner is unknown, DELETE THEM.
 					if (!ra.owner) {
 						console.warn(`[AgentManager] Found agent ${ra.name} with NO OWNER. Terminating...`);
-						this.stopAgent(ra.id); // This will now work even if not in local list
+						this.stopAgent(ra.id, 'Agent has no owner (compliance check)');
 						return;
 					}
 
@@ -214,6 +216,11 @@ class AgentManagerState {
 		if (agentIndex === -1) return;
 		const agent = this.agents[agentIndex];
 
+		if (!web3.address) {
+			this.addLog(id, '❌ Wallet not connected. Cannot assign owner.');
+			return;
+		}
+
 		try {
 			const res = await fetch(`${FLEET_URL}/agent/start`, {
 				method: 'POST',
@@ -239,7 +246,7 @@ class AgentManagerState {
 		}
 	}
 
-	async stopAgent(id: string) {
+	async stopAgent(id: string, reason?: string) {
 		const agentIndex = this.agents.findIndex((a) => a.id === id);
 		// Note: We might be stopping an orphan agent not in our list, so continue even if index is -1
 
@@ -252,7 +259,7 @@ class AgentManagerState {
 
 			if (agentIndex !== -1) {
 				this.agents[agentIndex].status = 'stopped';
-				this.addLog(id, '🛑 Stop command sent to Fleet.');
+				this.addLog(id, reason ? `🛑 Stopped: ${reason}` : '🛑 Stop command sent to Fleet.');
 			} else {
 				console.log(`[AgentManager] Stopped remote/orphan agent ${id}`);
 			}

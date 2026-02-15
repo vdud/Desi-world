@@ -72,7 +72,7 @@
 			<p class="text-gray-400 mb-8">Please connect your wallet to access the Command Center.</p>
 
 			<button
-				class="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
+				class="w-full px-6 py-3 bg-gradient-to-red from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-purple-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
 				onclick={() => web3.open()}
 			>
 				<span>⚡</span> Connect Wallet
