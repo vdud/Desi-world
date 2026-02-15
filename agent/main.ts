@@ -466,6 +466,8 @@ async function main() {
 				}
 			}
 
+			let hasSpoken = false;
+
 			if (!forceStop) {
 				if (consecutiveSayCount >= 5) {
 					console.log('⚠️ Too much talking, forcing a move...');
@@ -521,6 +523,7 @@ async function main() {
 								if (message) {
 									agent.say(message);
 									consecutiveSayCount++;
+									hasSpoken = true;
 								}
 
 								if (memoryUpdate) {
@@ -549,44 +552,16 @@ async function main() {
 
 			if (action) {
 				lastAction = action;
-
-				if (action.startsWith('MOVE')) {
-					// Check if we are currently following someone
-					if (agent.followTargetId) {
-						console.log(
-							`⚠️ Ignoring manual MOVE command because agent is in FOLLOW mode (Target: ${agent.followTargetId}). Use STOP to break follow.`
-						);
-						// Do nothing, treat as WAIT, so we don't clear followTargetId
-					} else {
-						consecutiveSayCount = 0; // Moving resets say count
-						agent.followTargetId = null; // Stop following if manual move
-						const parts = action.split(' ');
-						const x = parseFloat(parts[1]);
-						const z = parseFloat(parts[2]);
-						if (!isNaN(x) && !isNaN(z)) {
-							agent.moveTo(x, z);
-						}
-					}
-				} else if (action.startsWith('FOLLOW')) {
-					consecutiveSayCount = 0;
-					const parts = action.split(' ');
-					const targetId = parts[1];
-					if (targetId) {
-						agent.followTargetId = targetId;
-						console.log(`🔗 Following target: ${targetId}`);
-					}
-				} else if (action.startsWith('STOP')) {
-					agent.followTargetId = null;
-					agent.targetPosition = null;
-					console.log(`🛑 Stopping.`);
+                // ...
 				} else if (action.startsWith('SAY')) {
-					// Legacy support
-					consecutiveSayCount++;
-					const message = action.substring(4);
-					agent.say(message);
+					// Only use this if message field was empty (legacy support)
+					if (!hasSpoken) {
+						consecutiveSayCount++;
+						const text = action.substring(4);
+						agent.say(text);
+					}
 				} else {
 					// WAIT
-					// Do nothing, let existing follow/move logic continue
 				}
 			}
 
