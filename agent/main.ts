@@ -64,7 +64,7 @@ async function main() {
 		fs.writeFileSync(memoryFile, memory);
 	}
 
-	const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST || 'antigravity-server.vdud.partykit.dev';
+	const host = process.env.NEXT_PUBLIC_PARTYKIT_HOST || 'antigravity.partykit.dev';
 	const room = 'main-room';
 	const agentId = process.env.AGENT_ID || 'unknown-id';
 

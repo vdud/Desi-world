@@ -61,7 +61,7 @@ export class NetworkManager implements AgentInterface {
 		const isDev = import.meta.env.DEV;
 
 		if (typeof window !== 'undefined') {
-			const host = isDev ? window.location.host : 'antigravity-server.vdud.partykit.dev';
+			const host = isDev ? window.location.host : 'antigravity.partykit.dev';
 
 			this.socket = new PartySocket({
 				host,
