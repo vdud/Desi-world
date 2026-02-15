@@ -21,7 +21,7 @@ export interface WorldAgent {
 	owner?: string;
 }
 
-const FLEET_URL = import.meta.env.PROD ? 'http://13.204.77.125:3000' : '/api/fleet';
+const FLEET_URL = '/api/fleet';
 
 class AgentManagerState {
 	agents = $state<AgentConfig[]>([]);
